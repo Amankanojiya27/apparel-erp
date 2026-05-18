@@ -1,5 +1,12 @@
 // File: lib/style-factory.ts
-import { calculateReversePlan, STAGE_DAYS } from './planning';
+import { calculateReversePlan } from './planning';
+import {
+  buildDepartmentProgress,
+  buildMaterialChase,
+  buildEnhancedManpower,
+  getQuantityTier,
+  getQuantityPriorityNote,
+} from './phase1';
 import type {
   StyleExtensions,
   PipelineStep,
@@ -191,32 +198,7 @@ export function buildPreCosting(style: StyleInput): PreCosting {
 }
 
 export function buildManpower(style: StyleInput): ManpowerPlan[] {
-  const prodDays = STAGE_DAYS.production;
-  const hoursNeeded = Math.ceil((style.quantity / 500) * prodDays * 8);
-  const depts = [
-    { department: 'Cutting', factor: 0.12 },
-    { department: 'Sewing Line A', factor: 0.45 },
-    { department: 'Sewing Line B', factor: 0.25 },
-    { department: 'Finishing', factor: 0.1 },
-    { department: 'Packing', factor: 0.08 },
-  ];
-  return depts.map(({ department, factor }) => {
-    const requiredHours = Math.ceil(hoursNeeded * factor);
-    const seed = style._id.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-    const availableHours = Math.ceil(requiredHours * (0.88 + (seed % 20) / 100));
-    const utilizationPercent = Math.min(100, Math.round((requiredHours / availableHours) * 100));
-    let recommendation = 'Balanced — maintain schedule';
-    if (utilizationPercent > 95) recommendation = 'Overloaded — shift 1 line from low-priority style';
-    if (utilizationPercent < 70) recommendation = 'Underutilized — absorb small-quantity styles';
-    return {
-      department,
-      requiredHours,
-      availableHours,
-      utilizationPercent,
-      assignedWorkers: Math.ceil(requiredHours / 8),
-      recommendation,
-    };
-  });
+  return buildEnhancedManpower(style);
 }
 
 export function buildApprovals(style: StyleInput): ApprovalRecord[] {
@@ -312,17 +294,27 @@ export function enrichStyle(style: StyleWithExt & Record<string, unknown>): Styl
   const currentPipelineStep =
     pipeline.find((s) => s.status === 'active')?.id || pipeline.find((s) => s.status === 'pending')?.id || 'inquiry';
 
+  const deliveryDays = Math.ceil(
+    (new Date(normalized.deliveryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+  );
+
   return {
     ...normalized,
     ...style,
     pipeline,
     currentPipelineStep,
+    quantityTier: getQuantityTier(normalized.quantity),
+    quantityPriorityNote: getQuantityPriorityNote(normalized.quantity, deliveryDays),
     images: (style as StyleWithExt).images?.length ? (style as StyleWithExt).images! : buildImages(normalized),
     approvals: (style as StyleWithExt).approvals?.length ? (style as StyleWithExt).approvals! : buildApprovals(normalized),
     bom: (style as StyleWithExt).bom?.length ? (style as StyleWithExt).bom! : buildBOM(normalized),
     tna: (style as StyleWithExt).tna?.length ? (style as StyleWithExt).tna! : buildTNA(normalized),
     preCosting: (style as StyleWithExt).preCosting ?? buildPreCosting(normalized),
     manpower: (style as StyleWithExt).manpower?.length ? (style as StyleWithExt).manpower! : buildManpower(normalized),
+    departmentProgress: (style as StyleWithExt).departmentProgress?.length
+      ? (style as StyleWithExt).departmentProgress!
+      : buildDepartmentProgress(normalized),
+    materialChase: (style as StyleWithExt).materialChase ?? buildMaterialChase(normalized),
     emails: (style as StyleWithExt).emails?.length ? (style as StyleWithExt).emails! : buildEmails(normalized),
   } as StyleWithExt & StyleExtensions;
 }

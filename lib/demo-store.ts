@@ -14,7 +14,7 @@ export function getDemoStyleById(id: string) {
 export function updateDemoStyle(id: string, updates: Record<string, unknown>) {
   const idx = store.findIndex((s) => s._id === id);
   if (idx === -1) return null;
-  store[idx] = enrichStyle({ ...store[idx], ...updates } as typeof store[number]);
+  store[idx] = enrichStyle({ ...store[idx], ...updates } as Parameters<typeof enrichStyle>[0]);
   return store[idx];
 }
 

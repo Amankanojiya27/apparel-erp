@@ -3,14 +3,14 @@
 import Link from 'next/link';
 import { formatDate } from '@/lib/utils';
 import { SampleImageThumb } from '@/components/SampleImageThumb';
-import type { TNAMilestone } from '@/lib/style-types';
+import type { TNAMilestone, SampleImage } from '@/lib/style-types';
 
 export interface TNAStyleRow {
   _id: string;
   designNumber: string;
   buyerName: string;
-  images?: { _id: string; url: string; label: string; type: string; uploadedAt: string }[];
-  tna: TNAMilestone[];
+  images?: SampleImage[];
+  tna?: TNAMilestone[];
 }
 
 export function TNAGlobalCalendar({ styles }: { styles: TNAStyleRow[] }) {

@@ -14,7 +14,11 @@ import { SampleImageThumb } from '@/components/SampleImageThumb';
 import { PreCostingPanel } from '@/components/style-modules/PreCostingPanel';
 import { BOMMRPModule } from '@/components/style-modules/BOMMRPModule';
 import { TNACalendarView } from '@/components/style-modules/TNACalendarView';
-import { ManpowerPanel } from '@/components/style-modules/ManpowerPanel';
+import { ManpowerPhase1Panel } from '@/components/phase1/ManpowerPhase1Panel';
+import { DepartmentProgressPanel } from '@/components/phase1/DepartmentProgressPanel';
+import { MaterialChasePanel } from '@/components/phase1/MaterialChasePanel';
+import { QuantityPriorityBadge } from '@/components/phase1/QuantityPriorityBadge';
+import { detectResourceConflicts } from '@/lib/phase1';
 import { ApprovalPanel } from '@/components/style-modules/ApprovalPanel';
 import { EmailPanel } from '@/components/style-modules/EmailPanel';
 import type { StyleExtensions } from '@/lib/style-types';
@@ -22,6 +26,8 @@ import type { StyleExtensions } from '@/lib/style-types';
 const DETAIL_TABS = [
   'overview',
   'pipeline',
+  'progress',
+  'materials',
   'costing',
   'bom',
   'tna',
@@ -57,6 +63,7 @@ export default function StyleDetailPage() {
   const [activeTab, setActiveTab] = useState<(typeof DETAIL_TABS)[number]>('overview');
   const [newComment, setNewComment] = useState('');
   const [commentUser, setCommentUser] = useState('');
+  const [allStyles, setAllStyles] = useState<Array<{ _id: string; designNumber: string; manpower?: Style['manpower'] }>>([]);
 
   const fetchStyle = async () => {
     try {
@@ -72,8 +79,23 @@ export default function StyleDetailPage() {
 
   useEffect(() => {
     fetchStyle();
+    fetch('/api/styles')
+      .then((r) => r.json())
+      .then((data) => setAllStyles(Array.isArray(data) ? data : []))
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
+
+  const handleDailyProgress = async (department: string, units: number) => {
+    await fetch(`/api/styles/${params.id}/progress`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ department, unitsCompleted: units }),
+    });
+    fetchStyle();
+  };
+
+  const resourceConflicts = detectResourceConflicts(allStyles);
 
   const patchStyle = async (body: Record<string, unknown>) => {
     await fetch(`/api/styles/${params.id}`, {
@@ -140,8 +162,13 @@ export default function StyleDetailPage() {
           <div className="min-w-0 flex-1">
             <h1 className="text-xl font-bold text-slate-900">{style.designNumber}</h1>
             <p className="text-sm text-slate-600">
-              {style.buyerName} · {style.sampleType} · Qty {style.quantity}
+              {style.buyerName} · {style.sampleType} · Qty {style.quantity.toLocaleString()}
             </p>
+            {style.quantityTier && (
+              <div className="mt-1">
+                <QuantityPriorityBadge quantity={style.quantity} note={style.quantityPriorityNote} />
+              </div>
+            )}
           </div>
           <div className="flex flex-wrap gap-2">
             <span className={`rounded-full border px-3 py-1 text-sm font-medium ${getPriorityColor(insight.priority)}`}>
@@ -309,13 +336,41 @@ export default function StyleDetailPage() {
           </Card>
         )}
 
+        {activeTab === 'progress' && (
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">Department progress & daily updates</h2>
+              <p className="text-sm text-slate-500">Stage completion, bottlenecks, floor logging</p>
+            </CardHeader>
+            <CardContent>
+              <DepartmentProgressPanel
+                progress={style.departmentProgress}
+                onDailyUpdate={handleDailyProgress}
+              />
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === 'materials' && (
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">Fabric & pattern chase</h2>
+              <p className="text-sm text-slate-500">Material readiness before cutting</p>
+            </CardHeader>
+            <CardContent>
+              <MaterialChasePanel chase={style.materialChase} />
+            </CardContent>
+          </Card>
+        )}
+
         {activeTab === 'manpower' && (
           <Card>
             <CardHeader>
-              <h2 className="text-lg font-semibold">Manpower optimization</h2>
+              <h2 className="text-lg font-semibold">Manpower utilization</h2>
+              <p className="text-sm text-slate-500">Capacity, efficiency & resource conflicts</p>
             </CardHeader>
             <CardContent>
-              <ManpowerPanel manpower={style.manpower} />
+              <ManpowerPhase1Panel manpower={style.manpower} conflicts={resourceConflicts} />
             </CardContent>
           </Card>
         )}

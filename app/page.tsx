@@ -11,6 +11,10 @@ import { ReversePlanCard } from '@/components/ReversePlanCard';
 import { SampleImageThumb } from '@/components/SampleImageThumb';
 import { TNAGlobalCalendar } from '@/components/TNAGlobalCalendar';
 import type { SampleImage, TNAMilestone } from '@/lib/style-types';
+import { ReportsDashboard } from '@/components/phase1/ReportsDashboard';
+import { QuantityPriorityBadge } from '@/components/phase1/QuantityPriorityBadge';
+import type { ReportsSummary } from '@/lib/reports';
+import { BarChart3 } from 'lucide-react';
 import { calculatePriorityInsight } from '@/lib/planning';
 import { formatDate, getPriorityColor, getStatusColor } from '@/lib/utils';
 import {
@@ -37,12 +41,15 @@ type Style = {
   deliveryDate: string;
   sampleDeadline: string;
   quantity: number;
+  quantityTier?: string;
+  quantityPriorityNote?: string;
   fabricDetails?: { type: string; gsm: number; color: string };
   images?: SampleImage[];
   tna?: TNAMilestone[];
+  departmentProgress?: { percentComplete: number; isBottleneck: boolean; department: string }[];
 };
 
-const TABS = ['dashboard', 'styles', 'sampling', 'production', 'planning', 'tna', 'workflow'] as const;
+const TABS = ['dashboard', 'styles', 'sampling', 'production', 'planning', 'tna', 'reports', 'workflow'] as const;
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]>('dashboard');
@@ -51,10 +58,20 @@ export default function Home() {
   const [demoMode, setDemoMode] = useState(false);
   const [seeding, setSeeding] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [reports, setReports] = useState<ReportsSummary | null>(null);
 
   useEffect(() => {
     fetchStyles();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'reports' && !reports) {
+      fetch('/api/reports')
+        .then((r) => r.json())
+        .then(setReports)
+        .catch(() => {});
+    }
+  }, [activeTab, reports]);
 
   const fetchStyles = async () => {
     setLoading(true);
@@ -308,7 +325,8 @@ export default function Home() {
                               {insight.priority} · {insight.score}
                             </span>
                           </div>
-                          <p className="text-sm text-slate-600">{style.buyerName} · Qty {style.quantity}</p>
+                          <p className="text-sm text-slate-600">{style.buyerName}</p>
+                          <QuantityPriorityBadge quantity={style.quantity} note={style.quantityPriorityNote} />
                           <p className="mt-1 text-xs text-indigo-600">{insight.reason}</p>
                         </div>
                         <div className="hidden shrink-0 text-right text-sm sm:block">
@@ -319,6 +337,27 @@ export default function Home() {
                       </Link>
                     );
                   })}
+                </CardContent>
+              </Card>
+            )}
+
+            {activeTab === 'reports' && (
+              <Card>
+                <CardHeader>
+                  <h2 className="text-lg font-semibold flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5" />
+                    Advanced reporting (WFX-style)
+                  </h2>
+                  <p className="text-sm text-slate-500">
+                    Style-wise, department-wise, on-time delivery, delays & manpower utilization
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  {reports ? (
+                    <ReportsDashboard report={reports} styles={styles} />
+                  ) : (
+                    <p className="text-slate-500">Loading reports…</p>
+                  )}
                 </CardContent>
               </Card>
             )}

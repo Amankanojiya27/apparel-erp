@@ -14,7 +14,16 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     const style = await Style.findById(id).populate('buyer merchant');
     if (style) {
       const obj = style.toObject();
-      return NextResponse.json(enrichStyle({ ...obj, _id: String(obj._id) }));
+      return NextResponse.json(
+        enrichStyle({
+          ...obj,
+          _id: String(obj._id),
+          deliveryDate: new Date(obj.deliveryDate).toISOString(),
+          sampleDeadline: new Date(obj.sampleDeadline).toISOString(),
+          merchant: obj.merchant as unknown as { name: string; email?: string },
+          buyer: obj.buyer as unknown as { name: string; email?: string },
+        } as Parameters<typeof enrichStyle>[0])
+      );
     }
   } catch {
     /* fall through to demo */

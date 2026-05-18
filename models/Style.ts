@@ -145,6 +145,10 @@ export interface IStyle extends Document {
   tna?: Array<Record<string, unknown>>;
   preCosting?: Record<string, unknown>;
   manpower?: Array<Record<string, unknown>>;
+  departmentProgress?: Array<Record<string, unknown>>;
+  materialChase?: Record<string, unknown>;
+  quantityTier?: string;
+  quantityPriorityNote?: string;
   emails?: Array<Record<string, unknown>>;
   comments: Array<{
     user: string;
@@ -197,6 +201,10 @@ const StyleSchema: Schema = new Schema(
     tna: [TNASchema],
     preCosting: PreCostingSchema,
     manpower: [ManpowerSchema],
+    departmentProgress: { type: Schema.Types.Mixed },
+    materialChase: { type: Schema.Types.Mixed },
+    quantityTier: String,
+    quantityPriorityNote: String,
     emails: [EmailSchema],
     comments: [
       {

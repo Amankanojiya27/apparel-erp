@@ -93,9 +93,14 @@ export function calculatePriorityInsight(
   const deliveryUrgency =
     deliveryDays <= 0 ? 100 : deliveryDays <= 20 ? 95 : deliveryDays <= 30 ? 80 : deliveryDays <= 60 ? 50 : 25;
 
-  // Large qty + close delivery = pull ahead
-  const quantityFactor =
-    quantity >= 5000 && deliveryDays <= 45 ? 15 : quantity <= 500 && deliveryDays > 60 ? -10 : 0;
+  // Quantity-based scheduling (client requirement)
+  let quantityFactor = 0;
+  if (quantity >= 5000 && deliveryDays <= 45) quantityFactor = 20;
+  else if (quantity >= 2000 && deliveryDays <= 30) quantityFactor = 15;
+  else if (quantity >= 5000 && deliveryDays <= 60) quantityFactor = 10;
+  else if (quantity <= 500 && deliveryDays > 60) quantityFactor = -12;
+  else if (quantity <= 500 && deliveryDays > 30) quantityFactor = -8;
+  else if (quantity >= 2000) quantityFactor = 5;
 
   const statusBoost =
     status === 'production' ? 10 : status === 'approved' ? 5 : status === 'sampling' ? 0 : -5;
@@ -121,9 +126,13 @@ export function calculatePriorityInsight(
   } else if (sampleDays <= 7) {
     reason = 'Sample deadline this week';
   } else if (quantity >= 5000) {
-    reason = 'High volume order — schedule capacity early';
+    reason = 'Bulk qty (5K+) — pull ahead cutting & sewing capacity';
+  } else if (quantity <= 500 && deliveryDays > 45) {
+    reason = 'Small qty — flexible slot; lower priority vs urgent bulk';
+  } else if (quantity >= 2000) {
+    reason = 'Large qty — earlier production start required';
   } else {
-    reason = 'Balanced sample and delivery timeline';
+    reason = 'Balanced sample, delivery & quantity timeline';
   }
 
   return { score, priority, reason, sampleUrgency, deliveryUrgency, quantityFactor };

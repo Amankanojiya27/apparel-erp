@@ -66,9 +66,64 @@ export interface ManpowerPlan {
   department: string;
   requiredHours: number;
   availableHours: number;
+  capacityHours: number;
   utilizationPercent: number;
+  efficiencyPercent: number;
   assignedWorkers: number;
+  assignedStyleIds: string[];
   recommendation: string;
+}
+
+export interface DailyProgressUpdate {
+  date: string;
+  unitsCompleted: number;
+  notes?: string;
+  updatedBy: string;
+}
+
+export interface DepartmentProgress {
+  department: 'Sampling' | 'Cutting' | 'Sewing' | 'Finishing' | 'Packaging';
+  percentComplete: number;
+  targetUnits: number;
+  completedUnits: number;
+  isBottleneck: boolean;
+  status: 'not_started' | 'in_progress' | 'completed' | 'delayed';
+  dailyUpdates: DailyProgressUpdate[];
+}
+
+export type MaterialStatus =
+  | 'not_ordered'
+  | 'ordered'
+  | 'in_transit'
+  | 'received'
+  | 'qc_passed'
+  | 'delayed';
+
+export type PatternStatus = 'not_started' | 'in_development' | 'completed' | 'revision';
+
+export interface MaterialChase {
+  fabric: {
+    status: MaterialStatus;
+    supplier?: string;
+    expectedDate?: string;
+    receivedQty?: number;
+    requiredQty: number;
+  };
+  pattern: {
+    status: PatternStatus;
+    assignedTo?: string;
+    dueDate?: string;
+  };
+  readinessPercent: number;
+  productionReady: boolean;
+  alerts: string[];
+}
+
+export interface ResourceConflict {
+  department: string;
+  competingStyles: Array<{ designNumber: string; styleId: string; utilizationPercent: number }>;
+  severity: 'warning' | 'critical';
+  message: string;
 }
 
 export interface EmailThread {
@@ -90,8 +145,12 @@ export interface StyleExtensions {
   tna: TNAMilestone[];
   preCosting: PreCosting;
   manpower: ManpowerPlan[];
+  departmentProgress: DepartmentProgress[];
+  materialChase: MaterialChase;
   emails: EmailThread[];
   currentPipelineStep: string;
+  quantityTier?: 'small' | 'medium' | 'large' | 'bulk';
+  quantityPriorityNote?: string;
 }
 
 export const PIPELINE_STEP_DEFS = [

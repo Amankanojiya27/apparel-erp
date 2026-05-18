@@ -16,7 +16,14 @@ export async function GET() {
     return NextResponse.json(
       styles.map((s) => {
         const obj = s.toObject();
-        return enrichStyle({ ...obj, _id: String(obj._id) });
+        return enrichStyle({
+          ...obj,
+          _id: String(obj._id),
+          deliveryDate: new Date(obj.deliveryDate).toISOString(),
+          sampleDeadline: new Date(obj.sampleDeadline).toISOString(),
+          merchant: obj.merchant as unknown as { name: string; email?: string },
+          buyer: obj.buyer as unknown as { name: string; email?: string },
+        } as Parameters<typeof enrichStyle>[0]);
       })
     );
   } catch {
@@ -66,7 +73,17 @@ export async function POST(request: NextRequest) {
 
     const populatedStyle = await Style.findById(style._id).populate('buyer merchant');
     const obj = populatedStyle!.toObject();
-    return NextResponse.json(enrichStyle({ ...obj, _id: String(obj._id) }), { status: 201 });
+    return NextResponse.json(
+      enrichStyle({
+        ...obj,
+        _id: String(obj._id),
+        deliveryDate: new Date(obj.deliveryDate).toISOString(),
+        sampleDeadline: new Date(obj.sampleDeadline).toISOString(),
+        merchant: obj.merchant as unknown as { name: string; email?: string },
+        buyer: obj.buyer as unknown as { name: string; email?: string },
+      } as Parameters<typeof enrichStyle>[0]),
+      { status: 201 }
+    );
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
