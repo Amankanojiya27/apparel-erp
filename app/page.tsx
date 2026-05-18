@@ -8,6 +8,9 @@ import { Button } from '@/components/Button';
 import { WorkflowPipeline } from '@/components/WorkflowPipeline';
 import { AICopilotPanel } from '@/components/AICopilotPanel';
 import { ReversePlanCard } from '@/components/ReversePlanCard';
+import { SampleImageThumb } from '@/components/SampleImageThumb';
+import { TNAGlobalCalendar } from '@/components/TNAGlobalCalendar';
+import type { SampleImage, TNAMilestone } from '@/lib/style-types';
 import { calculatePriorityInsight } from '@/lib/planning';
 import { formatDate, getPriorityColor, getStatusColor } from '@/lib/utils';
 import {
@@ -35,9 +38,11 @@ type Style = {
   sampleDeadline: string;
   quantity: number;
   fabricDetails?: { type: string; gsm: number; color: string };
+  images?: SampleImage[];
+  tna?: TNAMilestone[];
 };
 
-const TABS = ['dashboard', 'styles', 'sampling', 'production', 'planning', 'workflow'] as const;
+const TABS = ['dashboard', 'styles', 'sampling', 'production', 'planning', 'tna', 'workflow'] as const;
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]>('dashboard');
@@ -120,12 +125,12 @@ export default function Home() {
         </div>
       </header>
 
-      {demoMode && (
+      {/* {demoMode && (
         <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-sm text-amber-800">
           <Sparkles className="mr-1 inline h-4 w-4" />
           Demo mode — sample data loaded. Connect MongoDB and click &quot;Load Demo Data&quot; to persist.
         </div>
-      )}
+      )} */}
 
       <nav className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-4 sm:px-6 lg:px-8">
@@ -152,16 +157,6 @@ export default function Home() {
           <>
             {activeTab === 'dashboard' && (
               <div className="space-y-6">
-                <div className="rounded-2xl bg-gray-100 p-6 text-black shadow-lg">
-                {/* <div className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-700 p-6 text-white shadow-lg"> */}
-                  <h2 className="text-2xl font-bold">Buyer Query → Delivery</h2>
-                  <p className="mt-2 max-w-2xl text-black/50">
-                    End-to-end apparel workflow: merchant assignment, fabric & BOM entry, sampling deadlines,
-                    dual-factor priority (sample + shipment), reverse planning, and in-app collaboration.
-                  </p>
-                  <WorkflowPipeline activeStep={3} />
-                </div>
-
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
                   {stats.map((stat) => (
                     <Card key={stat.label}>
@@ -328,6 +323,18 @@ export default function Home() {
               </Card>
             )}
 
+            {activeTab === 'tna' && (
+              <Card>
+                <CardHeader>
+                  <h2 className="text-lg font-semibold">TNA Calendar — all styles</h2>
+                  <p className="text-sm text-slate-500">Time & action milestones across buyers and departments</p>
+                </CardHeader>
+                <CardContent>
+                  <TNAGlobalCalendar styles={styles} />
+                </CardContent>
+              </Card>
+            )}
+
             {activeTab === 'workflow' && (
               <div className="space-y-6">
                 <Card>
@@ -405,6 +412,7 @@ function StyleTable({ styles, compact }: { styles: Style[]; compact?: boolean })
     <table className="w-full">
       <thead>
         <tr className="border-b border-slate-200 bg-slate-50/80">
+          <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">Sample</th>
           <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">Design</th>
           <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">Buyer</th>
           {!compact && <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">Merchant</th>}
@@ -425,6 +433,9 @@ function StyleTable({ styles, compact }: { styles: Style[]; compact?: boolean })
           );
           return (
             <tr key={style._id} className="border-b border-slate-100 hover:bg-slate-50">
+              <td className="px-4 py-3">
+                <SampleImageThumb images={style.images} styleId={style._id} designNumber={style.designNumber} />
+              </td>
               <td className="px-4 py-3 text-sm font-medium">{style.designNumber}</td>
               <td className="px-4 py-3 text-sm text-slate-600">{style.buyerName}</td>
               {!compact && (

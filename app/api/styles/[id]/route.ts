@@ -2,7 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Style from '@/models/Style';
-import { DEMO_STYLES } from '@/lib/demo-data';
+import { getDemoStyleById, updateDemoStyle } from '@/lib/demo-store';
+import { enrichStyle } from '@/lib/style-factory';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -11,12 +12,15 @@ export async function GET(_request: NextRequest, context: RouteContext) {
   try {
     await connectDB();
     const style = await Style.findById(id).populate('buyer merchant');
-    if (style) return NextResponse.json(style);
+    if (style) {
+      const obj = style.toObject();
+      return NextResponse.json(enrichStyle({ ...obj, _id: String(obj._id) }));
+    }
   } catch {
     /* fall through to demo */
   }
 
-  const demo = DEMO_STYLES.find((s) => s._id === id);
+  const demo = getDemoStyleById(id);
   if (demo) return NextResponse.json(demo);
   return NextResponse.json({ error: 'Style not found' }, { status: 404 });
 }
@@ -33,8 +37,8 @@ export async function PUT(request: NextRequest, context: RouteContext) {
   }
 
   const body = await request.json();
-  const demo = DEMO_STYLES.find((s) => s._id === id);
-  if (demo) return NextResponse.json({ ...demo, ...body });
+  const updated = updateDemoStyle(id, body);
+  if (updated) return NextResponse.json(updated);
   return NextResponse.json({ error: 'Style not found' }, { status: 404 });
 }
 

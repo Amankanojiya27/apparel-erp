@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Style from '@/models/Style';
 import User from '@/models/User';
+import { enrichStyle } from '@/lib/style-factory';
+import { resetDemoStore } from '@/lib/demo-store';
 
 const MERCHANTS = [
   { name: 'Rahul Sharma', email: 'rahul@factory.com' },
@@ -119,7 +121,27 @@ export async function POST() {
       },
     ];
 
-    await Style.insertMany(seedStyles);
+    const enriched = seedStyles.map((s, i) => {
+      const merchantIdx = [0, 1, 2, 0, 3][i] ?? 0;
+      const ext = enrichStyle({
+        _id: `seed-${i}`,
+        designNumber: s.designNumber,
+        buyerName: s.buyerName,
+        sampleType: s.sampleType,
+        status: s.status,
+        quantity: s.quantity,
+        deliveryDate: s.deliveryDate.toISOString(),
+        sampleDeadline: s.sampleDeadline.toISOString(),
+        fabricDetails: s.fabricDetails,
+        rawMaterials: s.rawMaterials,
+        merchant: { name: merchants[merchantIdx].name, email: MERCHANTS[merchantIdx].email },
+        buyer: { name: s.buyerName, email: BUYERS.find((b) => b.name === s.buyerName)?.email },
+      });
+      const { _id, ...rest } = ext as typeof ext & { _id: string };
+      return { ...s, ...rest };
+    });
+    await Style.insertMany(enriched);
+    resetDemoStore();
     const count = await Style.countDocuments();
 
     return NextResponse.json({ success: true, message: `Seeded ${count} styles`, count, mode: 'database' });

@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Style from '@/models/Style';
-import { DEMO_STYLES } from '@/lib/demo-data';
+import { getDemoStyleById, updateDemoStyle } from '@/lib/demo-store';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -28,15 +28,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
     /* demo fallback */
   }
 
-  const demo = DEMO_STYLES.find((s) => s._id === id);
+  const demo = getDemoStyleById(id);
   if (demo) {
-    const updated = {
-      ...demo,
+    const updated = updateDemoStyle(id, {
       comments: [
-        ...(demo.comments || []),
+        ...((demo as { comments?: unknown[] }).comments || []),
         { user: body.user, text: body.text, timestamp: new Date().toISOString() },
       ],
-    };
+    });
     return NextResponse.json(updated);
   }
 

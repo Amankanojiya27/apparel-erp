@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Style from '@/models/Style';
 import User from '@/models/User';
-import { DEMO_STYLES } from '@/lib/demo-data';
+import { getDemoStyles } from '@/lib/demo-store';
+import { enrichStyle } from '@/lib/style-factory';
 
 // GET all styles
 export async function GET() {
@@ -10,15 +11,16 @@ export async function GET() {
     await connectDB();
     const styles = await Style.find().populate('buyer merchant').sort({ createdAt: -1 });
     if (styles.length === 0) {
-      return NextResponse.json(DEMO_STYLES, {
-        headers: { 'X-Data-Source': 'demo' },
-      });
+      return NextResponse.json(getDemoStyles(), { headers: { 'X-Data-Source': 'demo' } });
     }
-    return NextResponse.json(styles);
+    return NextResponse.json(
+      styles.map((s) => {
+        const obj = s.toObject();
+        return enrichStyle({ ...obj, _id: String(obj._id) });
+      })
+    );
   } catch {
-    return NextResponse.json(DEMO_STYLES, {
-      headers: { 'X-Data-Source': 'demo' },
-    });
+    return NextResponse.json(getDemoStyles(), { headers: { 'X-Data-Source': 'demo' } });
   }
 }
 
@@ -63,7 +65,8 @@ export async function POST(request: NextRequest) {
     });
 
     const populatedStyle = await Style.findById(style._id).populate('buyer merchant');
-    return NextResponse.json(populatedStyle, { status: 201 });
+    const obj = populatedStyle!.toObject();
+    return NextResponse.json(enrichStyle({ ...obj, _id: String(obj._id) }), { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
