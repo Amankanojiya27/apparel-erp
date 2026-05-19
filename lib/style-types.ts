@@ -18,6 +18,17 @@ export interface SampleImage {
   uploadedAt: string;
 }
 
+export interface SampleStage {
+  stageId: 'proto' | 'fit' | 'pp' | 'size_set' | 'top' | 'approval';
+  status: 'pending' | 'in_progress' | 'submitted' | 'approved' | 'rejected' | 'revision';
+  deadline: string;
+  assignedTo: string;
+  submittedDate?: string;
+  buyerFeedback?: string;
+  revisionCount: number;
+  images?: SampleImage[];
+}
+
 export interface ApprovalRecord {
   _id: string;
   stage: string;
@@ -239,6 +250,44 @@ export interface QCParameter {
   status: 'pass' | 'fail';
 }
 
+export interface FabricSupplier {
+  supplierId: string;
+  supplierName: string;
+  fabricTypes: string[];
+  gsmRange: { min: number; max: number };
+  widthRange: { min: number; max: number };
+  leadTimeDays: number;
+  labDipCapability: boolean;
+  testingCapability: boolean;
+  contactPerson: string;
+  email: string;
+  phone: string;
+}
+
+export interface FabricQuotation {
+  quotationId: string;
+  styleReference: string;
+  fabricType: string;
+  gsm: number;
+  width: number;
+  supplierId: string;
+  ratePerMeter: number;
+  validUntil: string;
+  status: 'pending' | 'approved' | 'rejected';
+}
+
+export interface LabDipRequest {
+  requestId: string;
+  styleReference: string;
+  fabricType: string;
+  targetColor: string;
+  supplierId: string;
+  requestedDate: string;
+  receivedDate?: string;
+  testResults?: QCParameter[];
+  status: 'requested' | 'received' | 'testing' | 'approved' | 'rejected';
+}
+
 export interface QualityInspection {
   grnReference: string;
   parameters: QCParameter[];
@@ -392,7 +441,7 @@ export interface StyleExtensions {
   currentPipelineStep: string;
   quantityTier?: 'small' | 'medium' | 'large' | 'bulk';
   quantityPriorityNote?: string;
-  // New ERP fields
+  sampleWorkflow: SampleStage[];
   styleCode: string;
   styleName: string;
   category: string;
@@ -418,6 +467,9 @@ export interface StyleExtensions {
   deliveryChallan?: DeliveryChallan;
   invoice?: Invoice;
   paymentReceipt?: PaymentReceipt;
+  fabricSupplier?: FabricSupplier;
+  fabricQuotation?: FabricQuotation;
+  labDipRequest?: LabDipRequest;
   [key: string]: unknown;
 }
 

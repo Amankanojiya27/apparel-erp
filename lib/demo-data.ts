@@ -1,6 +1,6 @@
 // File: lib/demo-data.ts
 /** In-memory demo dataset — used when MongoDB is unavailable */
-import type { StyleExtensions, BOMLine, CostingSheet, Vendor, PurchaseRequisition, PurchaseOrder, GoodsReceiptNote, QualityInspection, ProductionOrder, MaterialIssue, ProductionTracking, FinishedGoodsReceipt, SalesOrder, DeliveryChallan, Invoice, PaymentReceipt, Attachment } from './style-types';
+import type { StyleExtensions, BOMLine, CostingSheet, Vendor, PurchaseRequisition, PurchaseOrder, GoodsReceiptNote, QualityInspection, ProductionOrder, MaterialIssue, ProductionTracking, FinishedGoodsReceipt, SalesOrder, DeliveryChallan, Invoice, PaymentReceipt, Attachment, SampleStage, FabricSupplier, FabricQuotation, LabDipRequest } from './style-types';
 
 const demoBOM: BOMLine[] = [
   { itemCode: 'FAB-CTN-001', itemDescription: 'Cotton Fabric 60"', category: 'fabric', consumptionPerGarment: 1.5, unit: 'Meter', rate: 180, amount: 270, totalRequired: 1500, inStock: 0, toProcure: 1500 },
@@ -229,6 +229,48 @@ const demoAttachments: Attachment[] = [
   { id: 'att-2', name: 'Design Sketch_STY-2026-001.jpg', type: 'design_sketch', url: '/files/design-sketch.jpg', uploadedAt: '2026-05-10' },
 ];
 
+const demoFabricSupplier: FabricSupplier = {
+  supplierId: 'FAB-SUP-101',
+  supplierName: 'Tirupur Fabrics Pvt Ltd',
+  fabricTypes: ['Cotton', 'Cotton Blend', 'Polyester', 'Viscose'],
+  gsmRange: { min: 100, max: 350 },
+  widthRange: { min: 44, max: 72 },
+  leadTimeDays: 15,
+  labDipCapability: true,
+  testingCapability: true,
+  contactPerson: 'Mr. Suresh',
+  email: 'suresh@tirupurfabrics.com',
+  phone: '9876543210',
+};
+
+const demoFabricQuotation: FabricQuotation = {
+  quotationId: 'QT-2026-00123',
+  styleReference: 'STY-2026-001',
+  fabricType: 'Cotton Fabric 60"',
+  gsm: 140,
+  width: 60,
+  supplierId: 'FAB-SUP-101',
+  ratePerMeter: 180,
+  validUntil: '2026-06-30',
+  status: 'approved',
+};
+
+const demoLabDipRequest: LabDipRequest = {
+  requestId: 'LD-2026-00456',
+  styleReference: 'STY-2026-001',
+  fabricType: 'Cotton Fabric 60"',
+  targetColor: 'Navy Blue',
+  supplierId: 'FAB-SUP-101',
+  requestedDate: '2026-05-15',
+  receivedDate: '2026-05-22',
+  testResults: [
+    { parameter: 'Color Match', standard: 'Approved Swatch', actual: 'Match', status: 'pass' },
+    { parameter: 'Color Fastness', standard: 'Grade 4+', actual: 'Grade 4', status: 'pass' },
+    { parameter: 'Shade Consistency', standard: 'Uniform', actual: 'Uniform', status: 'pass' },
+  ],
+  status: 'approved',
+};
+
 function daysFromNow(days: number): string {
   const d = new Date();
   d.setDate(d.getDate() + days);
@@ -348,6 +390,48 @@ const generateImages = () => {
   ];
 };
 
+const generateSampleWorkflow = (styleStatus: string): SampleStage[] => {
+  const baseStages: SampleStage[] = [
+    { stageId: 'proto', status: 'pending', deadline: daysFromNow(-40), assignedTo: 'Sampling Team', revisionCount: 0 },
+    { stageId: 'fit', status: 'pending', deadline: daysFromNow(-35), assignedTo: 'Sampling Team', revisionCount: 0 },
+    { stageId: 'pp', status: 'pending', deadline: daysFromNow(-30), assignedTo: 'Sampling Team', revisionCount: 0 },
+    { stageId: 'size_set', status: 'pending', deadline: daysFromNow(-25), assignedTo: 'Sampling Team', revisionCount: 0 },
+    { stageId: 'top', status: 'pending', deadline: daysFromNow(-20), assignedTo: 'Sampling Team', revisionCount: 0 },
+    { stageId: 'approval', status: 'pending', deadline: daysFromNow(-15), assignedTo: 'Merchant', revisionCount: 0 },
+  ];
+
+  if (styleStatus === 'completed') {
+    return [
+      { stageId: 'proto', status: 'approved', deadline: daysFromNow(-40), assignedTo: 'Sampling Team', submittedDate: daysFromNow(-38), buyerFeedback: 'Good overall', revisionCount: 1 },
+      { stageId: 'fit', status: 'approved', deadline: daysFromNow(-35), assignedTo: 'Sampling Team', submittedDate: daysFromNow(-33), buyerFeedback: 'Fit approved', revisionCount: 0 },
+      { stageId: 'pp', status: 'approved', deadline: daysFromNow(-30), assignedTo: 'Sampling Team', submittedDate: daysFromNow(-28), buyerFeedback: 'PP sample approved', revisionCount: 0 },
+      { stageId: 'size_set', status: 'approved', deadline: daysFromNow(-25), assignedTo: 'Sampling Team', submittedDate: daysFromNow(-23), buyerFeedback: 'Size set approved', revisionCount: 0 },
+      { stageId: 'top', status: 'approved', deadline: daysFromNow(-20), assignedTo: 'Sampling Team', submittedDate: daysFromNow(-18), buyerFeedback: 'TOP approved', revisionCount: 0 },
+      { stageId: 'approval', status: 'approved', deadline: daysFromNow(-15), assignedTo: 'Merchant', submittedDate: daysFromNow(-12), buyerFeedback: 'Final approval received', revisionCount: 0 },
+    ];
+  } else if (styleStatus === 'approved' || styleStatus === 'production') {
+    return [
+      { stageId: 'proto', status: 'approved', deadline: daysFromNow(-25), assignedTo: 'Sampling Team', submittedDate: daysFromNow(-23), buyerFeedback: 'Proto approved', revisionCount: 0 },
+      { stageId: 'fit', status: 'approved', deadline: daysFromNow(-20), assignedTo: 'Sampling Team', submittedDate: daysFromNow(-18), buyerFeedback: 'Fit approved', revisionCount: 1 },
+      { stageId: 'pp', status: 'approved', deadline: daysFromNow(-15), assignedTo: 'Sampling Team', submittedDate: daysFromNow(-13), buyerFeedback: 'PP approved', revisionCount: 0 },
+      { stageId: 'size_set', status: 'in_progress', deadline: daysFromNow(-10), assignedTo: 'Sampling Team', revisionCount: 0 },
+      { stageId: 'top', status: 'pending', deadline: daysFromNow(5), assignedTo: 'Sampling Team', revisionCount: 0 },
+      { stageId: 'approval', status: 'pending', deadline: daysFromNow(10), assignedTo: 'Merchant', revisionCount: 0 },
+    ];
+  } else if (styleStatus === 'sampling') {
+    return [
+      { stageId: 'proto', status: 'approved', deadline: daysFromNow(-15), assignedTo: 'Sampling Team', submittedDate: daysFromNow(-13), buyerFeedback: 'Proto approved', revisionCount: 0 },
+      { stageId: 'fit', status: 'in_progress', deadline: daysFromNow(-10), assignedTo: 'Sampling Team', revisionCount: 0 },
+      { stageId: 'pp', status: 'pending', deadline: daysFromNow(-5), assignedTo: 'Sampling Team', revisionCount: 0 },
+      { stageId: 'size_set', status: 'pending', deadline: daysFromNow(0), assignedTo: 'Sampling Team', revisionCount: 0 },
+      { stageId: 'top', status: 'pending', deadline: daysFromNow(5), assignedTo: 'Sampling Team', revisionCount: 0 },
+      { stageId: 'approval', status: 'pending', deadline: daysFromNow(10), assignedTo: 'Merchant', revisionCount: 0 },
+    ];
+  } else {
+    return baseStages;
+  }
+};
+
 export const DEMO_STYLES: (StyleExtensions & { _id: string; designNumber: string; buyerName: string; buyer: { name: string; email?: string }; merchant: { name: string; email?: string }; sampleType: string; status: string; priority: string; sampleDeadline: string; deliveryDate: string; quantity: number; fabricDetails: { type: string; description: string; gsm: number; color: string }; rawMaterials?: { buttonsPerGarment?: number; other?: string }; comments?: Array<{ user: string; text: string; timestamp: string }>; createdAt?: string; updatedAt?: string })[] = [
   {
     _id: 'demo-001',
@@ -368,7 +452,6 @@ export const DEMO_STYLES: (StyleExtensions & { _id: string; designNumber: string
     ],
     createdAt: daysFromNow(-90),
     updatedAt: daysFromNow(-2),
-    // New ERP fields
     styleCode: 'STY-2026-001',
     styleName: 'Men\'s Casual Printed Shirt',
     category: 'Apparel > Men > Shirts',
@@ -394,7 +477,6 @@ export const DEMO_STYLES: (StyleExtensions & { _id: string; designNumber: string
     deliveryChallan: demoDeliveryChallan,
     invoice: demoInvoice,
     paymentReceipt: demoPaymentReceipt,
-    // Existing fields
     pipeline: generatePipeline('payment', 'completed'),
     images: generateImages(),
     approvals: generateApprovals('completed'),
@@ -425,6 +507,10 @@ export const DEMO_STYLES: (StyleExtensions & { _id: string; designNumber: string
     emails: generateEmails('buying@abcretail.com'),
     currentPipelineStep: 'payment',
     quantityTier: 'medium',
+    sampleWorkflow: generateSampleWorkflow('completed'),
+    fabricSupplier: demoFabricSupplier,
+    fabricQuotation: demoFabricQuotation,
+    labDipRequest: demoLabDipRequest,
   },
   {
     _id: 'demo-002',
@@ -483,6 +569,7 @@ export const DEMO_STYLES: (StyleExtensions & { _id: string; designNumber: string
     },
     emails: generateEmails('buying@hm-demo.com'),
     currentPipelineStep: 'sampling',
+    sampleWorkflow: generateSampleWorkflow('sampling'),
   },
   {
     _id: 'demo-003',
@@ -543,6 +630,7 @@ export const DEMO_STYLES: (StyleExtensions & { _id: string; designNumber: string
     },
     emails: generateEmails('merch@zarahome-demo.com'),
     currentPipelineStep: 'production',
+    sampleWorkflow: generateSampleWorkflow('production'),
   },
   {
     _id: 'demo-004',
@@ -602,6 +690,7 @@ export const DEMO_STYLES: (StyleExtensions & { _id: string; designNumber: string
     },
     emails: generateEmails('tech@mango-demo.com'),
     currentPipelineStep: 'bom_mrp',
+    sampleWorkflow: generateSampleWorkflow('approved'),
   },
   {
     _id: 'demo-005',
@@ -657,6 +746,7 @@ export const DEMO_STYLES: (StyleExtensions & { _id: string; designNumber: string
     },
     emails: generateEmails('sourcing@target-demo.com'),
     currentPipelineStep: 'data_entry',
+    sampleWorkflow: generateSampleWorkflow('pending'),
   },
   {
     _id: 'demo-006',
@@ -714,6 +804,7 @@ export const DEMO_STYLES: (StyleExtensions & { _id: string; designNumber: string
     },
     emails: generateEmails('dev@uniqlo-demo.com'),
     currentPipelineStep: 'pre_costing',
+    sampleWorkflow: generateSampleWorkflow('sampling'),
   },
 ];
 

@@ -14,6 +14,7 @@ import { SampleImageThumb } from '@/components/SampleImageThumb';
 import { PreCostingPanel } from '@/components/style-modules/PreCostingPanel';
 import { BOMMRPModule } from '@/components/style-modules/BOMMRPModule';
 import { TNACalendarView } from '@/components/style-modules/TNACalendarView';
+import { SampleWorkflowPanel } from '@/components/style-modules/SampleWorkflowPanel';
 import { DepartmentProgressPanel } from '@/components/phase1/DepartmentProgressPanel';
 import { MaterialChasePanel } from '@/components/phase1/MaterialChasePanel';
 import { QuantityPriorityBadge } from '@/components/phase1/QuantityPriorityBadge';
@@ -24,6 +25,7 @@ import { PurchaseRequisitionPanel } from '@/components/erp-modules/PurchaseRequi
 import { PurchaseOrderPanel } from '@/components/erp-modules/PurchaseOrderPanel';
 import { GRNPanel } from '@/components/erp-modules/GRNPanel';
 import { QualityInspectionPanel } from '@/components/erp-modules/QualityInspectionPanel';
+import { FabricSupplierPanel } from '@/components/erp-modules/FabricSupplierPanel';
 import { ProductionOrderPanel } from '@/components/erp-modules/ProductionOrderPanel';
 import { ProductionTrackingPanel } from '@/components/erp-modules/ProductionTrackingPanel';
 import { SalesOrderPanel } from '@/components/erp-modules/SalesOrderPanel';
@@ -41,6 +43,8 @@ const DETAIL_TABS = [
   'costing',
   'bom',
   'tna',
+  'sample-workflow',
+  'fabric-supplier',
   'approvals',
   'email',
   'comments',
@@ -338,6 +342,34 @@ export default function StyleDetailPage() {
             </CardHeader>
             <CardContent>
               <TNACalendarView milestones={style.tna} />
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === 'sample-workflow' && (
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">Sample Workflow</h2>
+              <p className="text-sm text-slate-500">Track sample stages: Proto → Fit → PP → Size Set → TOP → Approval</p>
+            </CardHeader>
+            <CardContent>
+              <SampleWorkflowPanel sampleWorkflow={style.sampleWorkflow} />
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === 'fabric-supplier' && (
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">Fabric Supplier Management</h2>
+              <p className="text-sm text-slate-500">Supplier details, quotations, and lab dip approvals</p>
+            </CardHeader>
+            <CardContent>
+              <FabricSupplierPanel
+                fabricSupplier={style.fabricSupplier}
+                fabricQuotation={style.fabricQuotation}
+                labDipRequest={style.labDipRequest}
+              />
             </CardContent>
           </Card>
         )}
