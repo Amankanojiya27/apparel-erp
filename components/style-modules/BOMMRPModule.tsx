@@ -38,8 +38,8 @@ export function BOMMRPModule({ bom }: { bom: BOMLine[] }) {
           </thead>
           <tbody>
             {bom.map((line) => (
-              <tr key={line.item} className="border-b border-slate-100">
-                <td className="py-2 pr-4 font-medium">{line.item}</td>
+              <tr key={line.itemCode} className="border-b border-slate-100">
+                <td className="py-2 pr-4 font-medium">{line.itemCode}</td>
                 <td className="py-2 pr-4 capitalize text-slate-600">{line.category}</td>
                 <td className="py-2 pr-4">
                   {line.consumptionPerGarment} {line.unit}

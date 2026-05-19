@@ -32,7 +32,6 @@ export interface ReportsSummary {
   onTimeRate: number;
   avgCompletion: number;
   delayedStyles: number;
-  manpowerAvgUtilization: number;
   resourceConflicts: ReturnType<typeof detectResourceConflicts>;
   styleReports: StyleReportRow[];
   departmentReports: DepartmentReport[];
@@ -129,7 +128,6 @@ export function buildReportsSummary(styles: StyleInput[]): ReportsSummary {
     (s) => calculatePriorityInsight(s.sampleDeadline, s.deliveryDate, s.quantity, s.status).priority === 'urgent'
   ).length;
 
-  const allUtil = styles.flatMap((s) => (s.manpower || []).map((m) => m.utilizationPercent));
   const tiers = [
     { tier: 'small', label: 'Small (<500)', min: 0, max: 499 },
     { tier: 'medium', label: 'Medium (500–2K)', min: 500, max: 1999 },
@@ -146,7 +144,6 @@ export function buildReportsSummary(styles: StyleInput[]): ReportsSummary {
       ? Math.round(styleReports.reduce((a, s) => a + s.overallProgress, 0) / styleReports.length)
       : 0,
     delayedStyles: styleReports.filter((s) => s.onTimeRisk).length,
-    manpowerAvgUtilization: allUtil.length ? Math.round(allUtil.reduce((a, b) => a + b, 0) / allUtil.length) : 0,
     resourceConflicts: detectResourceConflicts(styles),
     styleReports,
     departmentReports,

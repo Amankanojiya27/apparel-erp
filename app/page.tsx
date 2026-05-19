@@ -10,25 +10,18 @@ import { AICopilotPanel } from '@/components/AICopilotPanel';
 import { ReversePlanCard } from '@/components/ReversePlanCard';
 import { SampleImageThumb } from '@/components/SampleImageThumb';
 import { TNAGlobalCalendar } from '@/components/TNAGlobalCalendar';
+import { Sidebar } from '@/components/Sidebar';
+import { TopNavbar } from '@/components/TopNavbar';
+import { InquiryEntry, type InquiryData } from '@/components/InquiryEntry';
 import type { SampleImage, TNAMilestone } from '@/lib/style-types';
 import { ReportsDashboard } from '@/components/phase1/ReportsDashboard';
 import { QuantityPriorityBadge } from '@/components/phase1/QuantityPriorityBadge';
 import type { ReportsSummary } from '@/lib/reports';
-import { BarChart3 } from 'lucide-react';
+import { BarChart3, Package, Calendar, Factory, TrendingUp, MessageSquare, Sparkles, ChevronRight } from 'lucide-react';
 import { calculatePriorityInsight } from '@/lib/planning';
 import { formatDate, getPriorityColor, getStatusColor } from '@/lib/utils';
-import {
-  LayoutDashboard,
-  Plus,
-  Calendar,
-  TrendingUp,
-  Package,
-  Sparkles,
-  MessageSquare,
-  ChevronRight,
-  Database,
-  Factory,
-} from 'lucide-react';
+import { DEMO_STYLES, DEMO_MERCHANTS } from '@/lib/demo-data';
+import { updateDemoStyle, resetDemoStore } from '@/lib/demo-store';
 
 type Style = {
   _id: string;
@@ -49,14 +42,15 @@ type Style = {
   departmentProgress?: { percentComplete: number; isBottleneck: boolean; department: string }[];
 };
 
-const TABS = ['dashboard', 'styles', 'sampling', 'production', 'planning', 'tna', 'reports', 'workflow'] as const;
-
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<(typeof TABS)[number]>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'inquiries' | 'styles' | 'sampling' | 'production' | 'planning' | 'tna' | 'reports' | 'workflow'>('dashboard');
   const [styles, setStyles] = useState<Style[]>([]);
+  const [inquiries, setInquiries] = useState<InquiryData[]>([]);
+  const [showInquiryEntry, setShowInquiryEntry] = useState(false);
   const [showStyleForm, setShowStyleForm] = useState(false);
-  const [demoMode, setDemoMode] = useState(false);
-  const [seeding, setSeeding] = useState(false);
+  const [inquiryData, setInquiryData] = useState<InquiryData | null>(null);
+  const [showNextSteps, setShowNextSteps] = useState(false);
+  const [createdStyle, setCreatedStyle] = useState<Style | null>(null);
   const [loading, setLoading] = useState(true);
   const [reports, setReports] = useState<ReportsSummary | null>(null);
 
@@ -66,36 +60,43 @@ export default function Home() {
 
   useEffect(() => {
     if (activeTab === 'reports' && !reports) {
-      fetch('/api/reports')
-        .then((r) => r.json())
-        .then(setReports)
-        .catch(() => {});
+      // Generate demo reports
+      const demoReports: ReportsSummary = {
+        totalStyles: DEMO_STYLES.length,
+        inProduction: DEMO_STYLES.filter(s => s.status === 'production').length,
+        urgentCount: DEMO_STYLES.filter(s => s.priority === 'urgent').length,
+        onTimeRate: 85,
+        avgCompletion: 65,
+        delayedStyles: DEMO_STYLES.filter(s => s.status === 'delayed').length,
+        resourceConflicts: [],
+        styleReports: [],
+        departmentReports: [
+          { department: 'Sampling', stylesActive: 5, avgUtilization: 75, avgProgress: 60, delayedCount: 1 },
+          { department: 'Cutting', stylesActive: 4, avgUtilization: 78, avgProgress: 55, delayedCount: 0 },
+          { department: 'Sewing', stylesActive: 6, avgUtilization: 92, avgProgress: 70, delayedCount: 1 },
+          { department: 'Finishing', stylesActive: 4, avgUtilization: 85, avgProgress: 65, delayedCount: 0 },
+          { department: 'Packaging', stylesActive: 3, avgUtilization: 70, avgProgress: 50, delayedCount: 0 },
+        ],
+        quantityBreakdown: [
+          { tier: 'small', label: 'Small (<500)', count: 3 },
+          { tier: 'medium', label: 'Medium (500–2K)', count: 5 },
+          { tier: 'large', label: 'Large (2K–5K)', count: 2 },
+          { tier: 'bulk', label: 'Bulk (5K+)', count: 1 },
+        ],
+      };
+      setReports(demoReports);
     }
   }, [activeTab, reports]);
 
   const fetchStyles = async () => {
     setLoading(true);
+    // Use demo data directly
     try {
-      const response = await fetch('/api/styles');
-      const data = await response.json();
-      setDemoMode(response.headers.get('X-Data-Source') === 'demo');
-      setStyles(Array.isArray(data) ? data : []);
+      setStyles(DEMO_STYLES);
     } catch {
       setStyles([]);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleSeed = async () => {
-    setSeeding(true);
-    try {
-      const res = await fetch('/api/seed', { method: 'POST' });
-      const data = await res.json();
-      if (data.success) setDemoMode(false);
-      await fetchStyles();
-    } finally {
-      setSeeding(false);
     }
   };
 
@@ -118,56 +119,10 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="border-b border-slate-200 bg-white shadow-sm">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600">
-              <LayoutDashboard className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-lg font-bold text-slate-900">Apparel ERP</h1>
-              {/* <p className="text-xs text-slate-500">WFX + Visual Gems · Phase 1 Demo</p> */}
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="secondary" size="sm" onClick={handleSeed} disabled={seeding}>
-              <Database className="mr-1 h-4 w-4" />
-              {seeding ? 'Loading…' : 'Load Demo Data'}
-            </Button>
-            <Button onClick={() => setShowStyleForm(true)}>
-              <Plus className="mr-1 h-4 w-4" />
-              New Style
-            </Button>
-          </div>
-        </div>
-      </header>
+      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+      <TopNavbar />
 
-      {/* {demoMode && (
-        <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-sm text-amber-800">
-          <Sparkles className="mr-1 inline h-4 w-4" />
-          Demo mode — sample data loaded. Connect MongoDB and click &quot;Load Demo Data&quot; to persist.
-        </div>
-      )} */}
-
-      <nav className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-4 sm:px-6 lg:px-8">
-          {TABS.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`shrink-0 border-b-2 px-4 py-3 text-sm font-medium capitalize transition-colors ${
-                activeTab === tab
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-      </nav>
-
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="ml-64 mt-16 p-6">
         {loading ? (
           <p className="text-center text-slate-500">Loading styles…</p>
         ) : (
@@ -209,16 +164,98 @@ export default function Home() {
               </div>
             )}
 
+            {activeTab === 'inquiries' && (
+              <div className="space-y-4">
+                <Card>
+                  <CardHeader className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold">All Inquiries</h2>
+                      <p className="text-sm text-slate-500">Manage buyer inquiries and convert to styles</p>
+                    </div>
+                    <Button onClick={() => setShowInquiryEntry(true)}>
+                      Create Inquiry
+                    </Button>
+                  </CardHeader>
+                  <CardContent>
+                    {inquiries.length === 0 ? (
+                      <div className="py-12 text-center">
+                        <p className="text-slate-500">No inquiries yet. Create your first inquiry to get started.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {inquiries.map((inquiry) => (
+                          <div
+                            key={inquiry.inquiryId}
+                            className="rounded-xl border border-slate-200 p-4 hover:bg-slate-50 cursor-pointer"
+                          >
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <h3 className="font-semibold">{inquiry.inquiryId}</h3>
+                                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                                    inquiry.formStatus === 'approved' ? 'bg-green-100 text-green-700' :
+                                    inquiry.formStatus === 'submitted' ? 'bg-blue-100 text-blue-700' :
+                                    'bg-slate-100 text-slate-700'
+                                  }`}>
+                                    {inquiry.formStatus}
+                                  </span>
+                                </div>
+                                <p className="text-sm text-slate-600 mt-1">
+                                  {inquiry.buyerName} · {inquiry.styleNumber} · {inquiry.productCategory}
+                                </p>
+                                <p className="text-xs text-slate-500 mt-1">
+                                  Qty: {inquiry.targetQty} · Target Ship: {formatDate(inquiry.targetShipDate)}
+                                </p>
+                              </div>
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => {
+                                  setInquiryData(inquiry);
+                                  setShowStyleForm(true);
+                                }}
+                              >
+                                Create Style
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
             {activeTab === 'styles' && (
-              <Card>
-                <CardHeader>
-                  <h2 className="text-lg font-semibold">All Styles</h2>
-                  <p className="text-sm text-slate-500">Click a row for details, comments & status updates</p>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <StyleTable styles={styles} />
-                </CardContent>
-              </Card>
+              <div className="space-y-4">
+                <Card className="bg-blue-50 border-blue-200">
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold text-blue-900 mb-2">💡 Quick Start Guide</h3>
+                    <ul className="text-sm text-blue-800 space-y-1">
+                      <li>• <strong>Create a style</strong> using the "New Style" button with all required fields</li>
+                      <li>• <strong>Review your style</strong> - click on any style row to see details and pipeline status</li>
+                      <li>• <strong>Track progress</strong> - use the Pipeline view to see where your style is in the workflow</li>
+                      <li>• <strong>Manage sampling</strong> - check the Sampling tab for sample deadlines and coordination</li>
+                      <li>• <strong>Plan production</strong> - use the Planning tab to prioritize styles based on deadlines</li>
+                    </ul>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold">All Styles</h2>
+                      <p className="text-sm text-slate-500">Click a row for details, comments & status updates</p>
+                    </div>
+                    <Button onClick={() => setShowStyleForm(true)}>
+                      New Style
+                    </Button>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <StyleTable styles={styles} />
+                  </CardContent>
+                </Card>
+              </div>
             )}
 
             {activeTab === 'sampling' && (
@@ -349,7 +386,7 @@ export default function Home() {
                     Advanced reporting (WFX-style)
                   </h2>
                   <p className="text-sm text-slate-500">
-                    Style-wise, department-wise, on-time delivery, delays & manpower utilization
+                    Style-wise, department-wise, on-time delivery, delays & resource utilization
                   </p>
                 </CardHeader>
                 <CardContent>
@@ -420,25 +457,117 @@ export default function Home() {
         )}
       </main>
 
+      {showInquiryEntry && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
+            <div className="border-b border-slate-200 p-6">
+              <h2 className="text-xl font-semibold">Inquiry Entry</h2>
+              <p className="text-sm text-slate-500">Enter buyer inquiry details</p>
+            </div>
+            <InquiryEntry
+              onSubmit={(data) => {
+                setInquiries([...inquiries, data]);
+                setShowInquiryEntry(false);
+              }}
+              onCancel={() => setShowInquiryEntry(false)}
+            />
+          </div>
+        </div>
+      )}
+
       {showStyleForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
             <div className="border-b border-slate-200 p-6">
               <h2 className="text-xl font-semibold">Create New Style</h2>
-              <p className="text-sm text-slate-500">Merchant punches style — fabric, BOM, deadlines</p>
+              <p className="text-sm text-slate-500">Step 2: Merchant punches style — fabric, BOM, deadlines</p>
+              {inquiryData && (
+                <p className="mt-1 text-xs text-blue-600">Inquiry ID: {inquiryData.inquiryId}</p>
+              )}
             </div>
             <StyleForm
+              inquiryData={inquiryData}
               onSubmit={async (data) => {
-                await fetch('/api/styles', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify(data),
-                });
+                // Create new style object
+                const newStyle: Style = {
+                  _id: `new-${Date.now()}`,
+                  designNumber: data.designNumber as string,
+                  buyerName: data.buyerName as string,
+                  merchant: { name: data.merchantName as string },
+                  sampleType: data.sampleType as string,
+                  fabricDetails: {
+                    type: data.fabricType as string,
+                    gsm: parseInt(data.fabricGsm as string, 10),
+                    color: data.fabricColor as string,
+                  },
+                  quantity: parseInt(data.quantity as string, 10),
+                  sampleDeadline: data.sampleDeadline as string,
+                  deliveryDate: data.deliveryDate as string,
+                  status: 'pending',
+                  priority: 'medium',
+                  images: [],
+                };
+                
+                // Add to styles list
+                setStyles([...styles, newStyle]);
+                setCreatedStyle(newStyle);
                 setShowStyleForm(false);
-                fetchStyles();
+                setInquiryData(null);
+                setShowNextSteps(true);
               }}
-              onCancel={() => setShowStyleForm(false)}
+              onCancel={() => {
+                setShowStyleForm(false);
+                setInquiryData(null);
+              }}
             />
+          </div>
+        </div>
+      )}
+
+      {showNextSteps && createdStyle && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl">
+            <div className="border-b border-slate-200 p-6">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+                  <Sparkles className="h-6 w-6 text-green-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold">Style Created Successfully!</h2>
+                  <p className="text-sm text-slate-500">{createdStyle.designNumber} - {createdStyle.buyerName}</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-6">
+              <h3 className="font-semibold text-slate-900 mb-4">What's Next?</h3>
+              <div className="space-y-3">
+                {[
+                  { step: '1', title: 'Review your style', desc: 'Click on the style in the Styles tab to view details and pipeline status' },
+                  { step: '2', title: 'Upload documents', desc: 'Add tech pack, design sketches, and other attachments' },
+                  { step: '3', title: 'Create BOM', desc: 'Define Bill of Materials with fabric, trims, and accessories' },
+                  { step: '4', title: 'Pre-costing', desc: 'Calculate costs and submit for approval' },
+                  { step: '5', title: 'Track progress', desc: 'Monitor the pipeline and TNA calendar for milestones' },
+                ].map((item) => (
+                  <div key={item.step} className="flex gap-3 rounded-lg border border-slate-200 p-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">
+                      {item.step}
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-slate-900">{item.title}</h4>
+                      <p className="text-sm text-slate-600">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-6 flex justify-end gap-3">
+                <Button variant="secondary" onClick={() => setShowNextSteps(false)}>
+                  Close
+                </Button>
+                <Button onClick={() => { setShowNextSteps(false); setActiveTab('styles'); }}>
+                  Go to Styles
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -505,22 +634,29 @@ function StyleTable({ styles, compact }: { styles: Style[]; compact?: boolean })
   );
 }
 
-function StyleForm({ onSubmit, onCancel }: { onSubmit: (data: Record<string, unknown>) => void; onCancel: () => void }) {
+function StyleForm({ onSubmit, onCancel, inquiryData }: { onSubmit: (data: Record<string, unknown>) => void; onCancel: () => void; inquiryData?: InquiryData | null }) {
   const [formData, setFormData] = useState({
-    designNumber: '',
-    buyerName: '',
+    designNumber: inquiryData?.styleNumber || '',
+    buyerName: inquiryData?.buyerName || '',
     buyerEmail: '',
-    merchantName: '',
+    merchantName: inquiryData?.merchantName || '',
     merchantEmail: '',
     sampleType: 'proto',
-    fabricType: '',
-    fabricDescription: '',
-    fabricGsm: '',
+    fabricType: inquiryData?.fabricComposition || '',
+    fabricDescription: inquiryData?.styleDescription || '',
+    fabricGsm: inquiryData?.fabricWeight || '',
     fabricColor: '',
     buttonsPerGarment: '',
-    quantity: '',
-    sampleDeadline: '',
-    deliveryDate: '',
+    quantity: inquiryData?.targetQty || '',
+    sampleDeadline: inquiryData?.sampleDeadline || '',
+    deliveryDate: inquiryData?.targetShipDate || '',
+    styleName: '',
+    category: inquiryData?.productCategory || '',
+    season: inquiryData?.season || '',
+    brand: inquiryData?.brandLabel || '',
+    designerName: '',
+    targetCost: inquiryData?.targetPrice || '',
+    targetMRP: '',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -537,6 +673,8 @@ function StyleForm({ onSubmit, onCancel }: { onSubmit: (data: Record<string, unk
         buttonsPerGarment: formData.buttonsPerGarment ? parseInt(formData.buttonsPerGarment, 10) : undefined,
       },
       quantity: parseInt(formData.quantity, 10),
+      targetCost: formData.targetCost ? parseFloat(formData.targetCost) : undefined,
+      targetMRP: formData.targetMRP ? parseFloat(formData.targetMRP) : undefined,
     });
   };
 
@@ -557,6 +695,7 @@ function StyleForm({ onSubmit, onCancel }: { onSubmit: (data: Record<string, unk
     <form onSubmit={handleSubmit} className="space-y-6 p-6">
       <div className="grid grid-cols-2 gap-4">
         {field('Design Number *', 'designNumber')}
+        {field('Style Name *', 'styleName')}
         {field('Buyer Name *', 'buyerName')}
         {field('Buyer Email *', 'buyerEmail', 'email')}
         {field('Merchant Name *', 'merchantName')}
@@ -577,6 +716,16 @@ function StyleForm({ onSubmit, onCancel }: { onSubmit: (data: Record<string, unk
       </div>
 
       <div className="border-t pt-4">
+        <h3 className="mb-3 font-medium">Style Classification</h3>
+        <div className="grid grid-cols-2 gap-4">
+          {field('Category *', 'category')}
+          {field('Season *', 'season')}
+          {field('Brand *', 'brand')}
+          {field('Designer Name *', 'designerName')}
+        </div>
+      </div>
+
+      <div className="border-t pt-4">
         <h3 className="mb-3 font-medium">Fabric Details</h3>
         <div className="grid grid-cols-2 gap-4">
           {field('Fabric Type *', 'fabricType')}
@@ -584,6 +733,14 @@ function StyleForm({ onSubmit, onCancel }: { onSubmit: (data: Record<string, unk
           {field('Description *', 'fabricDescription')}
           {field('Color *', 'fabricColor')}
           {field('Buttons / Garment', 'buttonsPerGarment', 'number', false)}
+        </div>
+      </div>
+
+      <div className="border-t pt-4">
+        <h3 className="mb-3 font-medium">Costing</h3>
+        <div className="grid grid-cols-2 gap-4">
+          {field('Target Cost (₹)', 'targetCost', 'number', false)}
+          {field('Target MRP (₹)', 'targetMRP', 'number', false)}
         </div>
       </div>
 

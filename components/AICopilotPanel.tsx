@@ -31,8 +31,8 @@ export function AICopilotPanel({ styles }: { styles: StyleRow[] }) {
           <Sparkles className="h-5 w-5 text-white" />
         </div>
         <div>
-          <h3 className="font-semibold text-gray-900">AI Planning Copilot</h3>
-          <p className="text-xs text-gray-500">Phase 1 — priority & reverse-plan insights</p>
+          <h3 className="font-semibold text-gray-900">Smart Planning</h3>
+          <p className="text-xs text-gray-500">priority & reverse-plan insights</p>
         </div>
       </div>
 

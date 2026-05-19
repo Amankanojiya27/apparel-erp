@@ -14,13 +14,23 @@ import { SampleImageThumb } from '@/components/SampleImageThumb';
 import { PreCostingPanel } from '@/components/style-modules/PreCostingPanel';
 import { BOMMRPModule } from '@/components/style-modules/BOMMRPModule';
 import { TNACalendarView } from '@/components/style-modules/TNACalendarView';
-import { ManpowerPhase1Panel } from '@/components/phase1/ManpowerPhase1Panel';
 import { DepartmentProgressPanel } from '@/components/phase1/DepartmentProgressPanel';
 import { MaterialChasePanel } from '@/components/phase1/MaterialChasePanel';
 import { QuantityPriorityBadge } from '@/components/phase1/QuantityPriorityBadge';
-import { detectResourceConflicts } from '@/lib/phase1';
 import { ApprovalPanel } from '@/components/style-modules/ApprovalPanel';
 import { EmailPanel } from '@/components/style-modules/EmailPanel';
+import { VendorMasterPanel } from '@/components/erp-modules/VendorMasterPanel';
+import { PurchaseRequisitionPanel } from '@/components/erp-modules/PurchaseRequisitionPanel';
+import { PurchaseOrderPanel } from '@/components/erp-modules/PurchaseOrderPanel';
+import { GRNPanel } from '@/components/erp-modules/GRNPanel';
+import { QualityInspectionPanel } from '@/components/erp-modules/QualityInspectionPanel';
+import { ProductionOrderPanel } from '@/components/erp-modules/ProductionOrderPanel';
+import { ProductionTrackingPanel } from '@/components/erp-modules/ProductionTrackingPanel';
+import { SalesOrderPanel } from '@/components/erp-modules/SalesOrderPanel';
+import { DeliveryChallanPanel } from '@/components/erp-modules/DeliveryChallanPanel';
+import { InvoicePanel } from '@/components/erp-modules/InvoicePanel';
+import { PaymentReceiptPanel } from '@/components/erp-modules/PaymentReceiptPanel';
+import { DEMO_STYLES } from '@/lib/demo-data';
 import type { StyleExtensions } from '@/lib/style-types';
 
 const DETAIL_TABS = [
@@ -31,10 +41,20 @@ const DETAIL_TABS = [
   'costing',
   'bom',
   'tna',
-  'manpower',
   'approvals',
   'email',
   'comments',
+  'vendor',
+  'pr',
+  'po',
+  'grn',
+  'qc',
+  'production',
+  'tracking',
+  'sales',
+  'delivery',
+  'invoice',
+  'payment',
 ] as const;
 
 type Style = StyleExtensions & {
@@ -63,13 +83,12 @@ export default function StyleDetailPage() {
   const [activeTab, setActiveTab] = useState<(typeof DETAIL_TABS)[number]>('overview');
   const [newComment, setNewComment] = useState('');
   const [commentUser, setCommentUser] = useState('');
-  const [allStyles, setAllStyles] = useState<Array<{ _id: string; designNumber: string; manpower?: Style['manpower'] }>>([]);
 
   const fetchStyle = async () => {
     try {
-      const response = await fetch(`/api/styles/${params.id}`);
-      const data = await response.json();
-      setStyle(data);
+      // Use demo data directly
+      const data = DEMO_STYLES.find(s => s._id === params.id);
+      setStyle(data || null);
     } catch (error) {
       console.error('Failed to fetch style:', error);
     } finally {
@@ -79,51 +98,38 @@ export default function StyleDetailPage() {
 
   useEffect(() => {
     fetchStyle();
-    fetch('/api/styles')
-      .then((r) => r.json())
-      .then((data) => setAllStyles(Array.isArray(data) ? data : []))
-      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
   const handleDailyProgress = async (department: string, units: number) => {
-    await fetch(`/api/styles/${params.id}/progress`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ department, unitsCompleted: units }),
-    });
+    // In demo mode, just log the update
+    console.log('Daily progress update:', { department, unitsCompleted: units });
+    // In a real app, this would update the database
     fetchStyle();
   };
 
-  const resourceConflicts = detectResourceConflicts(allStyles);
 
   const patchStyle = async (body: Record<string, unknown>) => {
-    await fetch(`/api/styles/${params.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+    // In demo mode, just log the update
+    console.log('Style update:', body);
+    // In a real app, this would update the database
     fetchStyle();
   };
 
   const handleApproval = async (approvalId: string, status: string, comments?: string) => {
-    await fetch(`/api/styles/${params.id}/approvals`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ approvalId, status, comments, reviewedBy: 'Supervisor' }),
-    });
+    // In demo mode, just log the approval
+    console.log('Approval update:', { approvalId, status, comments, reviewedBy: 'Supervisor' });
+    // In a real app, this would update the database
     fetchStyle();
   };
 
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim() || !commentUser.trim()) return;
-    await fetch(`/api/styles/${params.id}/comments`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user: commentUser, text: newComment }),
-    });
+    // In demo mode, just log the comment
+    console.log('New comment:', { user: commentUser, text: newComment });
     setNewComment('');
+    // In a real app, this would add to the database
     fetchStyle();
   };
 
@@ -269,7 +275,7 @@ export default function StyleDetailPage() {
             <aside className="space-y-6">
               <Card>
                 <CardHeader>
-                  <h3 className="font-semibold">AI insight</h3>
+                  <h3 className="font-semibold">Smart Insight</h3>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-slate-600">{insight.reason}</p>
@@ -308,7 +314,7 @@ export default function StyleDetailPage() {
               <p className="text-sm text-slate-500">CM, fabric, trims, wastage & margin → target FOB</p>
             </CardHeader>
             <CardContent>
-              <PreCostingPanel costing={style.preCosting} />
+              <PreCostingPanel costing={style.preCosting} costingSheet={style.costingSheet} />
             </CardContent>
           </Card>
         )}
@@ -363,17 +369,6 @@ export default function StyleDetailPage() {
           </Card>
         )}
 
-        {activeTab === 'manpower' && (
-          <Card>
-            <CardHeader>
-              <h2 className="text-lg font-semibold">Manpower utilization</h2>
-              <p className="text-sm text-slate-500">Capacity, efficiency & resource conflicts</p>
-            </CardHeader>
-            <CardContent>
-              <ManpowerPhase1Panel manpower={style.manpower} conflicts={resourceConflicts} />
-            </CardContent>
-          </Card>
-        )}
 
         {activeTab === 'approvals' && (
           <Card>
@@ -443,6 +438,138 @@ export default function StyleDetailPage() {
                   Add comment
                 </Button>
               </form>
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === 'vendor' && (
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">Vendor/Supplier Master</h2>
+              <p className="text-sm text-slate-500">Supplier details and contact information</p>
+            </CardHeader>
+            <CardContent>
+              <VendorMasterPanel vendor={style.vendor} />
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === 'pr' && (
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">Purchase Requisition (PR)</h2>
+              <p className="text-sm text-slate-500">Material requirement requests</p>
+            </CardHeader>
+            <CardContent>
+              <PurchaseRequisitionPanel pr={style.purchaseRequisition} />
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === 'po' && (
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">Purchase Order (PO)</h2>
+              <p className="text-sm text-slate-500">Official orders to suppliers</p>
+            </CardHeader>
+            <CardContent>
+              <PurchaseOrderPanel po={style.purchaseOrder} />
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === 'grn' && (
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">Goods Receipt Note (GRN)</h2>
+              <p className="text-sm text-slate-500">Material receipt and verification</p>
+            </CardHeader>
+            <CardContent>
+              <GRNPanel grn={style.goodsReceiptNote} />
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === 'qc' && (
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">Quality Inspection</h2>
+              <p className="text-sm text-slate-500">QC parameters and inspection results</p>
+            </CardHeader>
+            <CardContent>
+              <QualityInspectionPanel qc={style.qualityInspection} />
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === 'production' && (
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">Production Order / Work Order</h2>
+              <p className="text-sm text-slate-500">Production instructions and breakdown</p>
+            </CardHeader>
+            <CardContent>
+              <ProductionOrderPanel productionOrder={style.productionOrder} />
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === 'tracking' && (
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">Production Tracking / WIP</h2>
+              <p className="text-sm text-slate-500">Daily production progress updates</p>
+            </CardHeader>
+            <CardContent>
+              <ProductionTrackingPanel tracking={style.productionTracking} />
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === 'sales' && (
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">Sales Order</h2>
+              <p className="text-sm text-slate-500">Customer order details</p>
+            </CardHeader>
+            <CardContent>
+              <SalesOrderPanel salesOrder={style.salesOrder} />
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === 'delivery' && (
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">Delivery Challan</h2>
+              <p className="text-sm text-slate-500">Dispatch and shipment details</p>
+            </CardHeader>
+            <CardContent>
+              <DeliveryChallanPanel deliveryChallan={style.deliveryChallan} />
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === 'invoice' && (
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">Invoice</h2>
+              <p className="text-sm text-slate-500">Customer billing details</p>
+            </CardHeader>
+            <CardContent>
+              <InvoicePanel invoice={style.invoice} />
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === 'payment' && (
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">Payment Receipt</h2>
+              <p className="text-sm text-slate-500">Payment received from customer</p>
+            </CardHeader>
+            <CardContent>
+              <PaymentReceiptPanel paymentReceipt={style.paymentReceipt} />
             </CardContent>
           </Card>
         )}
