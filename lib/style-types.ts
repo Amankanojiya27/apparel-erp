@@ -91,17 +91,6 @@ export interface PreCosting {
   currency: string;
 }
 
-export interface ManpowerPlan {
-  department: string;
-  requiredHours: number;
-  availableHours: number;
-  capacityHours: number;
-  utilizationPercent: number;
-  efficiencyPercent: number;
-  assignedWorkers: number;
-  assignedStyleIds: string[];
-  recommendation: string;
-}
 
 export interface DailyProgressUpdate {
   date: string;
@@ -434,7 +423,6 @@ export interface StyleExtensions {
   tna: TNAMilestone[];
   preCosting: PreCosting;
   costingSheet?: CostingSheet;
-  manpower: ManpowerPlan[];
   departmentProgress: DepartmentProgress[];
   materialChase: MaterialChase;
   emails: EmailThread[];

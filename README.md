@@ -198,7 +198,6 @@ Each style has a dedicated comment section for team collaboration, reducing depe
 ## Future Enhancements
 
 - AI-powered priority recommendations
-- Automated manpower optimization
 - Integration with buyer platforms
 - Email client integration
 - Advanced reporting and analytics

@@ -2,8 +2,6 @@
 import type {
   DepartmentProgress,
   MaterialChase,
-  ManpowerPlan,
-  ResourceConflict,
   MaterialStatus,
   PatternStatus,
 } from './style-types';
@@ -157,74 +155,6 @@ export function buildMaterialChase(style: StyleForPhase1): MaterialChase {
   };
 }
 
-export function buildEnhancedManpower(style: StyleForPhase1): ManpowerPlan[] {
-  const qty = style.quantity;
-  const tier = getQuantityTier(qty);
-  const multiplier = tier === 'bulk' ? 1.4 : tier === 'large' ? 1.2 : tier === 'small' ? 0.5 : 1;
-  const seed = style._id.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-
-  const depts = [
-    { department: 'Sampling', factor: 0.08 },
-    { department: 'Cutting', factor: 0.12 },
-    { department: 'Sewing Line A', factor: 0.35 },
-    { department: 'Sewing Line B', factor: 0.25 },
-    { department: 'Finishing', factor: 0.12 },
-    { department: 'Packaging', factor: 0.08 },
-  ];
-
-  return depts.map(({ department, factor }) => {
-    const baseHours = Math.ceil((qty / 500) * 25 * 8 * factor * multiplier);
-    const requiredHours = Math.max(8, baseHours);
-    const capacityHours = Math.ceil(requiredHours * 1.15);
-    const availableHours = Math.ceil(capacityHours * (0.9 + (seed % 15) / 100));
-    const utilizationPercent = Math.min(100, Math.round((requiredHours / availableHours) * 100));
-    const efficiencyPercent = Math.min(98, 72 + (seed % 20));
-
-    let recommendation = 'Balanced — maintain schedule';
-    if (utilizationPercent > 95) recommendation = 'Overloaded — shift capacity or delay low-priority style';
-    if (utilizationPercent < 65) recommendation = 'Underutilized — assign small-quantity styles here';
-
-    return {
-      department,
-      requiredHours,
-      availableHours,
-      capacityHours,
-      utilizationPercent,
-      efficiencyPercent,
-      assignedWorkers: Math.ceil(requiredHours / 8),
-      assignedStyleIds: [style._id],
-      recommendation,
-    };
-  });
-}
-
-export function detectResourceConflicts(
-  styles: Array<{ _id: string; designNumber: string; manpower?: ManpowerPlan[] }>
-): ResourceConflict[] {
-  const byDept = new Map<string, Array<{ designNumber: string; styleId: string; utilizationPercent: number }>>();
-
-  for (const s of styles) {
-    for (const m of s.manpower || []) {
-      if (m.utilizationPercent < 85) continue;
-      const list = byDept.get(m.department) || [];
-      list.push({ designNumber: s.designNumber, styleId: s._id, utilizationPercent: m.utilizationPercent });
-      byDept.set(m.department, list);
-    }
-  }
-
-  const conflicts: ResourceConflict[] = [];
-  byDept.forEach((competingStyles, department) => {
-    if (competingStyles.length < 2) return;
-    const maxUtil = Math.max(...competingStyles.map((c) => c.utilizationPercent));
-    conflicts.push({
-      department,
-      competingStyles,
-      severity: maxUtil >= 98 ? 'critical' : 'warning',
-      message: `${competingStyles.length} styles competing for ${department} (${maxUtil}% peak utilization)`,
-    });
-  });
-  return conflicts;
-}
 
 function daysAgo(n: number): string {
   const d = new Date();

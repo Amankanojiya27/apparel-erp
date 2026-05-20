@@ -348,15 +348,6 @@ const generateTNA = (deliveryDate: string, status: string) => {
   ];
 };
 
-const generateManpower = (quantity: number) => {
-  return [
-    { department: 'Cutting', requiredHours: Math.ceil(quantity * 0.5), availableHours: 480, capacityHours: 480, utilizationPercent: Math.min(100, Math.ceil((quantity * 0.5) / 480 * 100)), efficiencyPercent: 92, assignedWorkers: 12, assignedStyleIds: [], recommendation: 'Capacity adequate' },
-    { department: 'Sewing', requiredHours: Math.ceil(quantity * 1.2), availableHours: 960, capacityHours: 960, utilizationPercent: Math.min(100, Math.ceil((quantity * 1.2) / 960 * 100)), efficiencyPercent: 88, assignedWorkers: 24, assignedStyleIds: [], recommendation: 'Optimal line allocation' },
-    { department: 'Finishing', requiredHours: Math.ceil(quantity * 0.4), availableHours: 400, capacityHours: 400, utilizationPercent: Math.min(100, Math.ceil((quantity * 0.4) / 400 * 100)), efficiencyPercent: 90, assignedWorkers: 10, assignedStyleIds: [], recommendation: 'No bottlenecks' },
-    { department: 'Packaging', requiredHours: Math.ceil(quantity * 0.3), availableHours: 320, capacityHours: 320, utilizationPercent: Math.min(100, Math.ceil((quantity * 0.3) / 320 * 100)), efficiencyPercent: 95, assignedWorkers: 8, assignedStyleIds: [], recommendation: 'On schedule' },
-  ];
-};
-
 const generateDepartmentProgress = (status: string, quantity: number) => {
   const baseProgress = status === 'completed' ? 100 : status === 'production' ? 60 : status === 'approved' ? 30 : 10;
   const getStatus = (s: string): 'not_started' | 'in_progress' | 'completed' | 'delayed' => {
@@ -495,7 +486,6 @@ export const DEMO_STYLES: (StyleExtensions & { _id: string; designNumber: string
       currency: '₹',
     },
     costingSheet: demoCostingSheet,
-    manpower: generateManpower(1000),
     departmentProgress: generateDepartmentProgress('completed', 1000),
     materialChase: {
       fabric: { status: 'qc_passed', supplier: 'VEN-FAB-101', expectedDate: '2026-06-03', receivedQty: 1500, requiredQty: 1500 },
@@ -558,7 +548,6 @@ export const DEMO_STYLES: (StyleExtensions & { _id: string; designNumber: string
       targetPrice: 350,
       currency: '₹',
     },
-    manpower: generateManpower(800),
     departmentProgress: generateDepartmentProgress('sampling', 800),
     materialChase: {
       fabric: { status: 'ordered', supplier: 'VEN-FAB-102', expectedDate: daysFromNow(10), requiredQty: 1440 },
@@ -619,7 +608,6 @@ export const DEMO_STYLES: (StyleExtensions & { _id: string; designNumber: string
       targetPrice: 400,
       currency: '₹',
     },
-    manpower: generateManpower(5200),
     departmentProgress: generateDepartmentProgress('production', 5200),
     materialChase: {
       fabric: { status: 'received', supplier: 'VEN-FAB-103', expectedDate: daysFromNow(-5), receivedQty: 8320, requiredQty: 8320 },
@@ -679,7 +667,6 @@ export const DEMO_STYLES: (StyleExtensions & { _id: string; designNumber: string
       targetPrice: 380,
       currency: '₹',
     },
-    manpower: generateManpower(3200),
     departmentProgress: generateDepartmentProgress('approved', 3200),
     materialChase: {
       fabric: { status: 'not_ordered', requiredQty: 4480 },
@@ -735,7 +722,6 @@ export const DEMO_STYLES: (StyleExtensions & { _id: string; designNumber: string
       targetPrice: 500,
       currency: '₹',
     },
-    manpower: generateManpower(12000),
     departmentProgress: generateDepartmentProgress('pending', 12000),
     materialChase: {
       fabric: { status: 'not_ordered', requiredQty: 24000 },
@@ -793,7 +779,6 @@ export const DEMO_STYLES: (StyleExtensions & { _id: string; designNumber: string
       targetPrice: 150,
       currency: '₹',
     },
-    manpower: generateManpower(450),
     departmentProgress: generateDepartmentProgress('sampling', 450),
     materialChase: {
       fabric: { status: 'in_transit', supplier: 'VEN-FAB-104', expectedDate: daysFromNow(5), requiredQty: 540 },

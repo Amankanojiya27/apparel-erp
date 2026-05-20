@@ -1,7 +1,6 @@
 // File: lib/reports.ts
 import { calculatePriorityInsight, calculateReversePlan } from './planning';
-import { detectResourceConflicts } from './phase1';
-import type { DepartmentProgress, ManpowerPlan } from './style-types';
+import type { DepartmentProgress } from './style-types';
 
 export interface StyleReportRow {
   _id: string;
@@ -20,7 +19,6 @@ export interface StyleReportRow {
 export interface DepartmentReport {
   department: string;
   stylesActive: number;
-  avgUtilization: number;
   avgProgress: number;
   delayedCount: number;
 }
@@ -32,7 +30,6 @@ export interface ReportsSummary {
   onTimeRate: number;
   avgCompletion: number;
   delayedStyles: number;
-  resourceConflicts: ReturnType<typeof detectResourceConflicts>;
   styleReports: StyleReportRow[];
   departmentReports: DepartmentReport[];
   quantityBreakdown: { tier: string; count: number; label: string }[];
@@ -47,7 +44,6 @@ interface StyleInput {
   deliveryDate: string;
   sampleDeadline: string;
   departmentProgress?: DepartmentProgress[];
-  manpower?: ManpowerPlan[];
 }
 
 function daysUntil(date: string): number {
@@ -86,11 +82,11 @@ export function buildReportsSummary(styles: StyleInput[]): ReportsSummary {
     };
   });
 
-  const deptMap = new Map<string, { util: number[]; progress: number[]; delayed: number; count: number }>();
+  const deptMap = new Map<string, { progress: number[]; delayed: number; count: number }>();
   const deptNames = ['Sampling', 'Cutting', 'Sewing', 'Finishing', 'Packaging'];
 
   for (const name of deptNames) {
-    deptMap.set(name, { util: [], progress: [], delayed: 0, count: 0 });
+    deptMap.set(name, { progress: [], delayed: 0, count: 0 });
   }
 
   for (const s of styles) {
@@ -102,13 +98,6 @@ export function buildReportsSummary(styles: StyleInput[]): ReportsSummary {
       entry.progress.push(d.percentComplete);
       if (d.status === 'delayed') entry.delayed++;
     }
-    const sewingUtil =
-      s.manpower?.filter((m) => m.department.includes('Sewing')).reduce((a, m) => a + m.utilizationPercent, 0) || 0;
-    const sewingCount = s.manpower?.filter((m) => m.department.includes('Sewing')).length || 1;
-    if (sewingUtil > 0) {
-      const e = deptMap.get('Sewing')!;
-      e.util.push(sewingUtil / sewingCount);
-    }
   }
 
   const departmentReports: DepartmentReport[] = deptNames.map((department) => {
@@ -116,7 +105,6 @@ export function buildReportsSummary(styles: StyleInput[]): ReportsSummary {
     return {
       department,
       stylesActive: e.count,
-      avgUtilization: e.util.length ? Math.round(e.util.reduce((a, b) => a + b, 0) / e.util.length) : 0,
       avgProgress: e.progress.length ? Math.round(e.progress.reduce((a, b) => a + b, 0) / e.progress.length) : 0,
       delayedCount: e.delayed,
     };
@@ -144,7 +132,6 @@ export function buildReportsSummary(styles: StyleInput[]): ReportsSummary {
       ? Math.round(styleReports.reduce((a, s) => a + s.overallProgress, 0) / styleReports.length)
       : 0,
     delayedStyles: styleReports.filter((s) => s.onTimeRisk).length,
-    resourceConflicts: detectResourceConflicts(styles),
     styleReports,
     departmentReports,
     quantityBreakdown: tiers.map((t) => ({

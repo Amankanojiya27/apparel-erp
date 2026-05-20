@@ -5,7 +5,7 @@ import type { ReportsSummary } from '@/lib/reports';
 import type { SampleImage } from '@/lib/style-types';
 import { SampleImageThumb } from '@/components/SampleImageThumb';
 import { formatDate } from '@/lib/utils';
-import { BarChart3, TrendingUp, AlertTriangle, Users, Package } from 'lucide-react';
+import { BarChart3, TrendingUp, AlertTriangle, Package } from 'lucide-react';
 
 interface Props {
   report: ReportsSummary;
@@ -22,7 +22,6 @@ export function ReportsDashboard({ report, styles }: Props) {
           { label: 'On-time rate', value: `${report.onTimeRate}%`, icon: TrendingUp, color: 'text-emerald-600' },
           { label: 'Avg completion', value: `${report.avgCompletion}%`, icon: BarChart3, color: 'text-blue-600' },
           { label: 'At risk', value: report.delayedStyles, icon: AlertTriangle, color: 'text-red-600' },
-          { label: 'Manpower util', value: `${report.manpowerAvgUtilization}%`, icon: Users, color: 'text-indigo-600' },
         ].map((s) => (
           <div key={s.label} className="rounded-xl border border-slate-200 bg-white p-4">
             <s.icon className={`mb-2 h-5 w-5 ${s.color}`} />
@@ -60,7 +59,6 @@ export function ReportsDashboard({ report, styles }: Props) {
               <tr className="text-left text-xs text-slate-500">
                 <th className="pb-2">Dept</th>
                 <th className="pb-2">Progress</th>
-                <th className="pb-2">Util</th>
                 <th className="pb-2">Delayed</th>
               </tr>
             </thead>
@@ -69,7 +67,6 @@ export function ReportsDashboard({ report, styles }: Props) {
                 <tr key={d.department} className="border-t border-slate-100">
                   <td className="py-2 font-medium">{d.department}</td>
                   <td className="py-2">{d.avgProgress}%</td>
-                  <td className="py-2">{d.avgUtilization || '—'}%</td>
                   <td className="py-2">{d.delayedCount}</td>
                 </tr>
               ))}
@@ -77,17 +74,6 @@ export function ReportsDashboard({ report, styles }: Props) {
           </table>
         </div>
       </div>
-
-      {report.resourceConflicts.length > 0 && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-          <h3 className="mb-2 font-semibold text-amber-900">Resource conflicts</h3>
-          <ul className="list-inside list-disc text-sm text-amber-800">
-            {report.resourceConflicts.map((c) => (
-              <li key={c.department}>{c.message}</li>
-            ))}
-          </ul>
-        </div>
-      )}
 
       <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
         <div className="border-b border-slate-200 px-5 py-4">

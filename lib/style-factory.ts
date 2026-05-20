@@ -3,7 +3,6 @@ import { calculateReversePlan } from './planning';
 import {
   buildDepartmentProgress,
   buildMaterialChase,
-  buildEnhancedManpower,
   getQuantityTier,
   getQuantityPriorityNote,
 } from './phase1';
@@ -14,7 +13,6 @@ import type {
   BOMLine,
   TNAMilestone,
   PreCosting,
-  ManpowerPlan,
   SampleImage,
   ApprovalRecord,
   EmailThread,
@@ -212,9 +210,6 @@ export function buildPreCosting(style: StyleInput): PreCosting {
   };
 }
 
-export function buildManpower(style: StyleInput): ManpowerPlan[] {
-  return buildEnhancedManpower(style);
-}
 
 export function buildApprovals(style: StyleInput): ApprovalRecord[] {
   const merchant = style.merchant?.name || 'Merchant';
@@ -325,7 +320,6 @@ export function enrichStyle(style: StyleWithExt & Record<string, unknown>): Styl
     bom: (style as StyleWithExt).bom?.length ? (style as StyleWithExt).bom! : buildBOM(normalized),
     tna: (style as StyleWithExt).tna?.length ? (style as StyleWithExt).tna! : buildTNA(normalized),
     preCosting: (style as StyleWithExt).preCosting ?? buildPreCosting(normalized),
-    manpower: (style as StyleWithExt).manpower?.length ? (style as StyleWithExt).manpower! : buildManpower(normalized),
     departmentProgress: (style as StyleWithExt).departmentProgress?.length
       ? (style as StyleWithExt).departmentProgress!
       : buildDepartmentProgress(normalized),
