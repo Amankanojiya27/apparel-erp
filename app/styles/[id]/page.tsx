@@ -32,6 +32,10 @@ import { SalesOrderPanel } from '@/components/erp-modules/SalesOrderPanel';
 import { DeliveryChallanPanel } from '@/components/erp-modules/DeliveryChallanPanel';
 import { InvoicePanel } from '@/components/erp-modules/InvoicePanel';
 import { PaymentReceiptPanel } from '@/components/erp-modules/PaymentReceiptPanel';
+import { ConsumptionSheetPanel } from '@/components/style-modules/ConsumptionSheetPanel';
+import { OperationBreakdownPanel } from '@/components/style-modules/OperationBreakdownPanel';
+import { PPMeetingPanel } from '@/components/style-modules/PPMeetingPanel';
+import { QualityPlanningPanel } from '@/components/style-modules/QualityPlanningPanel';
 import { DEMO_STYLES } from '@/lib/demo-data';
 import type { StyleExtensions } from '@/lib/style-types';
 
@@ -42,6 +46,10 @@ const DETAIL_TABS = [
   'materials',
   'costing',
   'bom',
+  'consumption',
+  'operations',
+  'pp-meeting',
+  'quality',
   'tna',
   'sample-workflow',
   'fabric-supplier',
@@ -330,6 +338,54 @@ export default function StyleDetailPage() {
             </CardHeader>
             <CardContent>
               <BOMMRPModule bom={style.bom} />
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === 'consumption' && (
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">Consumption Sheet</h2>
+              <p className="text-sm text-slate-500">Marker plan, fabric consumption, trims, thread, packaging & wastage</p>
+            </CardHeader>
+            <CardContent>
+              <ConsumptionSheetPanel consumptionSheet={style.consumptionSheet} />
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === 'operations' && (
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">Operation Breakdown & SMV</h2>
+              <p className="text-sm text-slate-500">Operations, Standard Minute Values, line balancing & bottleneck analysis</p>
+            </CardHeader>
+            <CardContent>
+              <OperationBreakdownPanel operationBreakdown={style.operationBreakdown} />
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === 'pp-meeting' && (
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">Pre-Production Meeting</h2>
+              <p className="text-sm text-slate-500">PP meeting checklist, attendees, review items & final approval</p>
+            </CardHeader>
+            <CardContent>
+              <PPMeetingPanel ppMeeting={style.ppMeeting} />
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === 'quality' && (
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">Quality Planning</h2>
+              <p className="text-sm text-slate-500">Quality standards, defect list, AQL levels & inspection plans</p>
+            </CardHeader>
+            <CardContent>
+              <QualityPlanningPanel qualityPlan={style.qualityPlan} />
             </CardContent>
           </Card>
         )}

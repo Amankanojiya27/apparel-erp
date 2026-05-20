@@ -2,9 +2,13 @@
 
 import { Bell, User, ChevronDown, Settings } from 'lucide-react';
 
-export function TopNavbar() {
+interface TopNavbarProps {
+  isSidebarOpen: boolean;
+}
+
+export function TopNavbar({ isSidebarOpen }: TopNavbarProps) {
   return (
-    <header className="fixed left-64 right-0 top-0 z-20 h-16 border-b border-slate-200 bg-white shadow-sm">
+    <header className={`fixed right-0 top-0 z-20 h-16 border-b border-slate-200 bg-white shadow-sm transition-all duration-300 ${isSidebarOpen ? 'left-64' : 'left-16'}`}>
       <div className="flex h-full items-center justify-between px-6">
         <div className="flex-1">
           {/* Search or other left-side content can go here */}

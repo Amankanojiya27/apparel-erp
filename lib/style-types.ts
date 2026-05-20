@@ -277,6 +277,125 @@ export interface LabDipRequest {
   status: 'requested' | 'received' | 'testing' | 'approved' | 'rejected';
 }
 
+export interface MarkerPlan {
+  markerEfficiency: number;
+  numberOfPlies: number;
+  garmentLength: number;
+  markerWidth: number;
+  markerLength: number;
+}
+
+export interface ConsumptionSheet {
+  markerPlan: MarkerPlan;
+  fabricConsumption: number; // meters per garment
+  trimConsumption: Record<string, number>; // item code → qty per garment
+  threadConsumption: number; // meters per garment
+  packagingConsumption: Record<string, number>; // item → qty per garment
+  cuttingWastagePercent: number;
+  sewingWastagePercent: number;
+  totalFabricRequired: number;
+  finalizedAt?: string;
+  finalizedBy?: string;
+}
+
+export interface Operation {
+  operationId: string;
+  operationName: string;
+  department: 'cutting' | 'sewing' | 'washing' | 'finishing' | 'packing';
+  smv: number; // Standard Minute Value
+  machineType: string;
+  helperCount: number;
+  sequence: number;
+}
+
+export interface LineBalance {
+  lineId: string;
+  lineName: string;
+  assignedOperations: string[]; // operation IDs
+  totalSMV: number;
+  targetOutputPerHour: number;
+  requiredOperators: number;
+}
+
+export interface OperationBreakdown {
+  operations: Operation[];
+  lineBalances: LineBalance[];
+  totalGarmentSMV: number;
+  bottleneckOperation?: string;
+}
+
+export interface PPMeetingItem {
+  itemId: string;
+  itemName: string;
+  status: 'pending' | 'reviewed' | 'approved' | 'concern';
+  reviewer: string;
+  comments?: string;
+  attachmentIds?: string[];
+  reviewedAt?: string;
+}
+
+export interface PPMeeting {
+  meetingId: string;
+  styleReference: string;
+  meetingDate: string;
+  attendees: string[];
+  checklist: PPMeetingItem[];
+  overallStatus: 'pending' | 'approved' | 'conditional' | 'rejected';
+  minutes?: string;
+  approvedBy?: string;
+  approvedAt?: string;
+}
+
+export interface QualityStandard {
+  standardId: string;
+  category: string;
+  measurementTolerances: Record<string, { tolerance: string; method: string }>;
+}
+
+export interface Defect {
+  defectId: string;
+  defectName: string;
+  category: 'critical' | 'major' | 'minor';
+  description: string;
+}
+
+export interface AQLLevel {
+  inspectionLevel: string;
+  aql: string;
+  sampleSize: number;
+  acceptLimit: number;
+  rejectLimit: number;
+}
+
+export interface QCPlan {
+  qualityStandardId: string;
+  defectList: string[]; // defect IDs
+  aqlLevel: AQLLevel;
+  inlineInspection: { frequency: string; checkpoints: string[] };
+  finalInspection: { frequency: string; checkpoints: string[] };
+}
+
+export interface ColorVariant {
+  colorCode: string;
+  colorName: string;
+  pantone?: string;
+}
+
+export interface SizeMeasurement {
+  size: string;
+  chest?: number;
+  length?: number;
+  shoulder?: number;
+  sleeve?: number;
+  waist?: number;
+  inseam?: number;
+}
+
+export interface SKUStructure {
+  format: string; // e.g., "{style}-{color}-{size}"
+  example: string;
+}
+
 export interface QualityInspection {
   grnReference: string;
   parameters: QCParameter[];
@@ -458,6 +577,15 @@ export interface StyleExtensions {
   fabricSupplier?: FabricSupplier;
   fabricQuotation?: FabricQuotation;
   labDipRequest?: LabDipRequest;
+  consumptionSheet?: ConsumptionSheet;
+  operationBreakdown?: OperationBreakdown;
+  ppMeeting?: PPMeeting;
+  qualityPlan?: QCPlan;
+  colorVariants?: ColorVariant[];
+  sizeMeasurements?: SizeMeasurement[];
+  skuStructure?: SKUStructure;
+  fitType?: string;
+  genderCategory?: string;
   [key: string]: unknown;
 }
 

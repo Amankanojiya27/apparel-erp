@@ -1,6 +1,6 @@
 // File: lib/demo-data.ts
 /** In-memory demo dataset — used when MongoDB is unavailable */
-import type { StyleExtensions, BOMLine, CostingSheet, Vendor, PurchaseRequisition, PurchaseOrder, GoodsReceiptNote, QualityInspection, ProductionOrder, MaterialIssue, ProductionTracking, FinishedGoodsReceipt, SalesOrder, DeliveryChallan, Invoice, PaymentReceipt, Attachment, SampleStage, FabricSupplier, FabricQuotation, LabDipRequest } from './style-types';
+import type { StyleExtensions, BOMLine, CostingSheet, Vendor, PurchaseRequisition, PurchaseOrder, GoodsReceiptNote, QualityInspection, ProductionOrder, MaterialIssue, ProductionTracking, FinishedGoodsReceipt, SalesOrder, DeliveryChallan, Invoice, PaymentReceipt, Attachment, SampleStage, FabricSupplier, FabricQuotation, LabDipRequest, ConsumptionSheet, OperationBreakdown, PPMeeting, QCPlan, ColorVariant, SizeMeasurement, SKUStructure } from './style-types';
 
 const demoBOM: BOMLine[] = [
   { itemCode: 'FAB-CTN-001', itemDescription: 'Cotton Fabric 60"', category: 'fabric', consumptionPerGarment: 1.5, unit: 'Meter', rate: 180, amount: 270, totalRequired: 1500, inStock: 0, toProcure: 1500 },
@@ -271,6 +271,145 @@ const demoLabDipRequest: LabDipRequest = {
   status: 'approved',
 };
 
+const demoConsumptionSheet: ConsumptionSheet = {
+  markerPlan: {
+    markerEfficiency: 82,
+    numberOfPlies: 10,
+    garmentLength: 75,
+    markerWidth: 150,
+    markerLength: 180,
+  },
+  fabricConsumption: 1.5,
+  trimConsumption: {
+    'BTN-PLY-002': 7,
+    'LBL-BRD-001': 1,
+  },
+  threadConsumption: 15,
+  packagingConsumption: {
+    'Polybag': 1,
+    'Carton Label': 1,
+  },
+  cuttingWastagePercent: 5,
+  sewingWastagePercent: 3,
+  totalFabricRequired: 1500,
+  finalizedAt: '2026-05-20',
+  finalizedBy: 'Planning Head',
+};
+
+const demoOperationBreakdown: OperationBreakdown = {
+  operations: [
+    { operationId: 'OP-001', operationName: 'Fabric Spreading', department: 'cutting', smv: 0.5, machineType: 'Spreading Machine', helperCount: 2, sequence: 1 },
+    { operationId: 'OP-002', operationName: 'Marker Making', department: 'cutting', smv: 0.3, machineType: 'CAD System', helperCount: 1, sequence: 2 },
+    { operationId: 'OP-003', operationName: 'Cutting', department: 'cutting', smv: 0.8, machineType: 'Straight Knife', helperCount: 3, sequence: 3 },
+    { operationId: 'OP-004', operationName: 'Front Part Sewing', department: 'sewing', smv: 0.6, machineType: 'Single Needle', helperCount: 1, sequence: 4 },
+    { operationId: 'OP-005', operationName: 'Back Part Sewing', department: 'sewing', smv: 0.5, machineType: 'Single Needle', helperCount: 1, sequence: 5 },
+    { operationId: 'OP-006', operationName: 'Sleeve Attaching', department: 'sewing', smv: 0.7, machineType: 'Single Needle', helperCount: 1, sequence: 6 },
+    { operationId: 'OP-007', operationName: 'Collar Attaching', department: 'sewing', smv: 0.8, machineType: 'Flatlock', helperCount: 1, sequence: 7 },
+    { operationId: 'OP-008', operationName: 'Button Hole', department: 'sewing', smv: 0.4, machineType: 'Button Hole Machine', helperCount: 1, sequence: 8 },
+    { operationId: 'OP-009', operationName: 'Button Sewing', department: 'sewing', smv: 0.3, machineType: 'Button Sewing Machine', helperCount: 1, sequence: 9 },
+    { operationId: 'OP-010', operationName: 'Washing', department: 'washing', smv: 0.2, machineType: 'Washing Machine', helperCount: 2, sequence: 10 },
+    { operationId: 'OP-011', operationName: 'Ironing', department: 'finishing', smv: 0.4, machineType: 'Steam Iron', helperCount: 1, sequence: 11 },
+    { operationId: 'OP-012', operationName: 'Quality Check', department: 'finishing', smv: 0.3, machineType: 'Manual', helperCount: 1, sequence: 12 },
+    { operationId: 'OP-013', operationName: 'Polybag Packing', department: 'packing', smv: 0.2, machineType: 'Manual', helperCount: 1, sequence: 13 },
+    { operationId: 'OP-014', operationName: 'Carton Packing', department: 'packing', smv: 0.3, machineType: 'Manual', helperCount: 2, sequence: 14 },
+  ],
+  lineBalances: [
+    {
+      lineId: 'LINE-001',
+      lineName: 'Line A - Sewing',
+      assignedOperations: ['OP-004', 'OP-005', 'OP-006', 'OP-007', 'OP-008', 'OP-009'],
+      totalSMV: 3.3,
+      targetOutputPerHour: 45,
+      requiredOperators: 6,
+    },
+    {
+      lineId: 'LINE-002',
+      lineName: 'Line B - Finishing',
+      assignedOperations: ['OP-011', 'OP-012'],
+      totalSMV: 0.7,
+      targetOutputPerHour: 60,
+      requiredOperators: 2,
+    },
+  ],
+  totalGarmentSMV: 5.8,
+  bottleneckOperation: 'Collar Attaching',
+};
+
+const demoPPMeeting: PPMeeting = {
+  meetingId: 'PPM-2026-00123',
+  styleReference: 'STY-2026-001',
+  meetingDate: '2026-05-25',
+  attendees: ['Merchant Head', 'Production Manager', 'Quality Head', 'Planning Head', 'Sample Coordinator'],
+  checklist: [
+    { itemId: 'PP-001', itemName: 'Approved Sample', status: 'approved', reviewer: 'Sample Coordinator', comments: 'TOP sample approved by buyer', reviewedAt: '2026-05-24' },
+    { itemId: 'PP-002', itemName: 'BOM', status: 'approved', reviewer: 'Planning Head', comments: 'All materials finalized', reviewedAt: '2026-05-24' },
+    { itemId: 'PP-003', itemName: 'Artwork', status: 'approved', reviewer: 'Design Team', comments: 'Print artwork approved', reviewedAt: '2026-05-24' },
+    { itemId: 'PP-004', itemName: 'Printing Details', status: 'approved', reviewer: 'Print Master', comments: 'Screen print specifications confirmed', reviewedAt: '2026-05-24' },
+    { itemId: 'PP-005', itemName: 'Embroidery Details', status: 'approved', reviewer: 'Embroidery Head', comments: 'Logo placement and thread colors confirmed', reviewedAt: '2026-05-24' },
+    { itemId: 'PP-006', itemName: 'Wash Standard', status: 'approved', reviewer: 'Wash Master', comments: 'Wash process approved', reviewedAt: '2026-05-24' },
+    { itemId: 'PP-007', itemName: 'Packing Method', status: 'approved', reviewer: 'Packing Head', comments: 'Polybag and carton specifications confirmed', reviewedAt: '2026-05-24' },
+    { itemId: 'PP-008', itemName: 'Quality Expectations', status: 'approved', reviewer: 'Quality Head', comments: 'AQL standards defined', reviewedAt: '2026-05-24' },
+    { itemId: 'PP-009', itemName: 'Delivery Date', status: 'approved', reviewer: 'Merchant Head', comments: 'Delivery date confirmed with buyer', reviewedAt: '2026-05-24' },
+  ],
+  overallStatus: 'approved',
+  minutes: 'All checklist items reviewed and approved. Production can start as scheduled on June 5th.',
+  approvedBy: 'Production Manager',
+  approvedAt: '2026-05-25',
+};
+
+const demoQualityPlan: QCPlan = {
+  qualityStandardId: 'QS-SHIRT-001',
+  defectList: ['DF-001', 'DF-002', 'DF-003', 'DF-004', 'DF-005'],
+  aqlLevel: {
+    inspectionLevel: 'General Inspection Level II',
+    aql: '2.5',
+    sampleSize: 125,
+    acceptLimit: 7,
+    rejectLimit: 8,
+  },
+  inlineInspection: {
+    frequency: 'Every 2 hours',
+    checkpoints: [
+      'Seam quality check',
+      'Stitch density verification',
+      'Button hole alignment',
+      'Label placement accuracy',
+      'Print quality inspection',
+      'Embroidery quality check',
+    ],
+  },
+  finalInspection: {
+    frequency: '100% inspection',
+    checkpoints: [
+      'Measurement verification per size chart',
+      'Color shade consistency',
+      'Fabric defects check',
+      'Trim quality inspection',
+      'Packaging compliance',
+      'Carton labeling accuracy',
+    ],
+  },
+};
+
+const demoColorVariants: ColorVariant[] = [
+  { colorCode: 'NVY-001', colorName: 'Navy Blue', pantone: '19-4024 TCX' },
+  { colorCode: 'SKY-001', colorName: 'Sky Blue', pantone: '14-4318 TCX' },
+  { colorCode: 'WHT-001', colorName: 'White', pantone: '11-0601 TCX' },
+];
+
+const demoSizeMeasurements: SizeMeasurement[] = [
+  { size: 'S', chest: 96, length: 70, shoulder: 44, sleeve: 23 },
+  { size: 'M', chest: 102, length: 72, shoulder: 46, sleeve: 24 },
+  { size: 'L', chest: 108, length: 74, shoulder: 48, sleeve: 25 },
+  { size: 'XL', chest: 114, length: 76, shoulder: 50, sleeve: 26 },
+  { size: 'XXL', chest: 120, length: 78, shoulder: 52, sleeve: 27 },
+];
+
+const demoSKUStructure: SKUStructure = {
+  format: '{style}-{color}-{size}',
+  example: 'STY-2026-001-NVY-001-M',
+};
+
 function daysFromNow(days: number): string {
   const d = new Date();
   d.setDate(d.getDate() + days);
@@ -297,7 +436,6 @@ const generatePipeline = (currentStep: string, status: 'completed' | 'active' | 
     { id: 'invoicing', label: 'Invoicing', department: 'Accounts' },
     { id: 'payment', label: 'Payment', department: 'Accounts' },
   ];
-  
   const currentIndex = steps.findIndex(s => s.id === currentStep);
   return steps.map((step, index) => ({
     id: step.id,
@@ -375,9 +513,9 @@ const generateEmails = (buyerEmail: string) => {
 
 const generateImages = () => {
   return [
-    { _id: 'img-1', url: '/images/sample-front.jpg', label: 'Front View', type: 'proto' as const, uploadedAt: daysFromNow(-30) },
-    { _id: 'img-2', url: '/images/sample-back.jpg', label: 'Back View', type: 'proto' as const, uploadedAt: daysFromNow(-30) },
-    { _id: 'img-3', url: '/images/tech-pack.pdf', label: 'Tech Pack', type: 'techpack' as const, uploadedAt: daysFromNow(-35) },
+    { _id: 'img-1', url: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=800&q=80', label: 'Front View', type: 'proto' as const, uploadedAt: daysFromNow(-30) },
+    { _id: 'img-2', url: 'https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=800&q=80', label: 'Back View', type: 'proto' as const, uploadedAt: daysFromNow(-30) },
+    { _id: 'img-3', url: 'https://images.unsplash.com/photo-1558171813-4c088753af8f?w=800&q=80', label: 'Tech Pack', type: 'techpack' as const, uploadedAt: daysFromNow(-35) },
   ];
 };
 
@@ -501,6 +639,15 @@ export const DEMO_STYLES: (StyleExtensions & { _id: string; designNumber: string
     fabricSupplier: demoFabricSupplier,
     fabricQuotation: demoFabricQuotation,
     labDipRequest: demoLabDipRequest,
+    consumptionSheet: demoConsumptionSheet,
+    operationBreakdown: demoOperationBreakdown,
+    ppMeeting: demoPPMeeting,
+    qualityPlan: demoQualityPlan,
+    colorVariants: demoColorVariants,
+    sizeMeasurements: demoSizeMeasurements,
+    skuStructure: demoSKUStructure,
+    fitType: 'regular',
+    genderCategory: 'men',
   },
   {
     _id: 'demo-002',

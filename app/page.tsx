@@ -14,9 +14,7 @@ import { Sidebar } from '@/components/Sidebar';
 import { TopNavbar } from '@/components/TopNavbar';
 import { InquiryEntry, type InquiryData } from '@/components/InquiryEntry';
 import type { SampleImage, TNAMilestone } from '@/lib/style-types';
-import { ReportsDashboard } from '@/components/phase1/ReportsDashboard';
 import { QuantityPriorityBadge } from '@/components/phase1/QuantityPriorityBadge';
-import type { ReportsSummary } from '@/lib/reports';
 import { BarChart3, Package, Calendar, Factory, TrendingUp, MessageSquare, Sparkles, ChevronRight } from 'lucide-react';
 import { calculatePriorityInsight } from '@/lib/planning';
 import { formatDate, getPriorityColor, getStatusColor } from '@/lib/utils';
@@ -43,7 +41,7 @@ type Style = {
 };
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'inquiries' | 'styles' | 'sampling' | 'production' | 'planning' | 'tna' | 'reports' | 'workflow'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'inquiries' | 'styles' | 'sampling' | 'production' | 'planning' | 'tna' | 'workflow'>('dashboard');
   const [styles, setStyles] = useState<Style[]>([]);
   const [inquiries, setInquiries] = useState<InquiryData[]>([]);
   const [showInquiryEntry, setShowInquiryEntry] = useState(false);
@@ -52,40 +50,12 @@ export default function Home() {
   const [showNextSteps, setShowNextSteps] = useState(false);
   const [createdStyle, setCreatedStyle] = useState<Style | null>(null);
   const [loading, setLoading] = useState(true);
-  const [reports, setReports] = useState<ReportsSummary | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   useEffect(() => {
     fetchStyles();
   }, []);
 
-  useEffect(() => {
-    if (activeTab === 'reports' && !reports) {
-      // Generate demo reports
-      const demoReports: ReportsSummary = {
-        totalStyles: DEMO_STYLES.length,
-        inProduction: DEMO_STYLES.filter(s => s.status === 'production').length,
-        urgentCount: DEMO_STYLES.filter(s => s.priority === 'urgent').length,
-        onTimeRate: 85,
-        avgCompletion: 65,
-        delayedStyles: DEMO_STYLES.filter(s => s.status === 'delayed').length,
-        styleReports: [],
-        departmentReports: [
-          { department: 'Sampling', stylesActive: 5, avgProgress: 60, delayedCount: 1 },
-          { department: 'Cutting', stylesActive: 4, avgProgress: 55, delayedCount: 0 },
-          { department: 'Sewing', stylesActive: 6, avgProgress: 70, delayedCount: 1 },
-          { department: 'Finishing', stylesActive: 4, avgProgress: 65, delayedCount: 0 },
-          { department: 'Packaging', stylesActive: 3, avgProgress: 50, delayedCount: 0 },
-        ],
-        quantityBreakdown: [
-          { tier: 'small', label: 'Small (<500)', count: 3 },
-          { tier: 'medium', label: 'Medium (500–2K)', count: 5 },
-          { tier: 'large', label: 'Large (2K–5K)', count: 2 },
-          { tier: 'bulk', label: 'Bulk (5K+)', count: 1 },
-        ],
-      };
-      setReports(demoReports);
-    }
-  }, [activeTab, reports]);
 
   const fetchStyles = async () => {
     setLoading(true);
@@ -118,10 +88,10 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
-      <TopNavbar />
+      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} isOpen={isSidebarOpen} onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
+      <TopNavbar isSidebarOpen={isSidebarOpen} />
 
-      <main className="ml-64 mt-16 p-6">
+      <main className={`mt-16 p-6 transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-16'}`}>
         {loading ? (
           <p className="text-center text-slate-500">Loading styles…</p>
         ) : (
@@ -228,18 +198,6 @@ export default function Home() {
 
             {activeTab === 'styles' && (
               <div className="space-y-4">
-                <Card className="bg-blue-50 border-blue-200">
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold text-blue-900 mb-2">💡 Quick Start Guide</h3>
-                    <ul className="text-sm text-blue-800 space-y-1">
-                      <li>• <strong>Create a style</strong> using the "New Style" button with all required fields</li>
-                      <li>• <strong>Review your style</strong> - click on any style row to see details and pipeline status</li>
-                      <li>• <strong>Track progress</strong> - use the Pipeline view to see where your style is in the workflow</li>
-                      <li>• <strong>Manage sampling</strong> - check the Sampling tab for sample deadlines and coordination</li>
-                      <li>• <strong>Plan production</strong> - use the Planning tab to prioritize styles based on deadlines</li>
-                    </ul>
-                  </CardContent>
-                </Card>
                 <Card>
                   <CardHeader className="flex items-center justify-between">
                     <div>
@@ -377,26 +335,6 @@ export default function Home() {
               </Card>
             )}
 
-            {activeTab === 'reports' && (
-              <Card>
-                <CardHeader>
-                  <h2 className="text-lg font-semibold flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5" />
-                    Advanced reporting (WFX-style)
-                  </h2>
-                  <p className="text-sm text-slate-500">
-                    Style-wise, department-wise, on-time delivery, delays & resource utilization
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  {reports ? (
-                    <ReportsDashboard report={reports} styles={styles} />
-                  ) : (
-                    <p className="text-slate-500">Loading reports…</p>
-                  )}
-                </CardContent>
-              </Card>
-            )}
 
             {activeTab === 'tna' && (
               <Card>
@@ -656,6 +594,9 @@ function StyleForm({ onSubmit, onCancel, inquiryData }: { onSubmit: (data: Recor
     designerName: '',
     targetCost: inquiryData?.targetPrice || '',
     targetMRP: '',
+    fitType: 'regular',
+    genderCategory: 'men',
+    skuFormat: '{style}-{color}-{size}',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -674,6 +615,12 @@ function StyleForm({ onSubmit, onCancel, inquiryData }: { onSubmit: (data: Recor
       quantity: parseInt(formData.quantity, 10),
       targetCost: formData.targetCost ? parseFloat(formData.targetCost) : undefined,
       targetMRP: formData.targetMRP ? parseFloat(formData.targetMRP) : undefined,
+      fitType: formData.fitType,
+      genderCategory: formData.genderCategory,
+      skuStructure: {
+        format: formData.skuFormat,
+        example: formData.skuFormat.replace('{style}', 'STY-001').replace('{color}', 'NVY').replace('{size}', 'M'),
+      },
     });
   };
 
@@ -721,6 +668,32 @@ function StyleForm({ onSubmit, onCancel, inquiryData }: { onSubmit: (data: Recor
           {field('Season *', 'season')}
           {field('Brand *', 'brand')}
           {field('Designer Name *', 'designerName')}
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700">Fit Type *</label>
+            <select
+              className="w-full rounded-lg border border-slate-300 px-3 py-2"
+              value={formData.fitType}
+              onChange={(e) => setFormData({ ...formData, fitType: e.target.value })}
+            >
+              <option value="slim">Slim Fit</option>
+              <option value="regular">Regular Fit</option>
+              <option value="relaxed">Relaxed Fit</option>
+              <option value="oversized">Oversized</option>
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700">Gender Category *</label>
+            <select
+              className="w-full rounded-lg border border-slate-300 px-3 py-2"
+              value={formData.genderCategory}
+              onChange={(e) => setFormData({ ...formData, genderCategory: e.target.value })}
+            >
+              <option value="men">Men</option>
+              <option value="women">Women</option>
+              <option value="unisex">Unisex</option>
+              <option value="kids">Kids</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -740,6 +713,14 @@ function StyleForm({ onSubmit, onCancel, inquiryData }: { onSubmit: (data: Recor
         <div className="grid grid-cols-2 gap-4">
           {field('Target Cost (₹)', 'targetCost', 'number', false)}
           {field('Target MRP (₹)', 'targetMRP', 'number', false)}
+        </div>
+      </div>
+
+      <div className="border-t pt-4">
+        <h3 className="mb-3 font-medium">SKU Structure</h3>
+        <div className="grid grid-cols-1 gap-4">
+          {field('SKU Format *', 'skuFormat')}
+          <p className="text-xs text-slate-500">Use placeholders: &#123;style&#125;, &#123;color&#125;, &#123;size&#125;. Example: &#123;style&#125;-&#123;color&#125;-&#123;size&#125;</p>
         </div>
       </div>
 

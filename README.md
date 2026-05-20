@@ -200,7 +200,6 @@ Each style has a dedicated comment section for team collaboration, reducing depe
 - AI-powered priority recommendations
 - Integration with buyer platforms
 - Email client integration
-- Advanced reporting and analytics
 - Mobile app development
 - Real-time notifications
 
